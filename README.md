@@ -39,17 +39,44 @@ This repository implements a GitOps workflow for managing a Proxmox server with 
 ### 1. System Overview
 
 ```mermaid
+%%{init: {
+    'theme': 'base',
+    'themeVariables': {
+        'background': 'transparent',
+        'primaryColor': '#f8f9fa',
+        'primaryText': '#24292f',
+        'primaryBorderColor': '#d0d7de',
+        'lineColor': '#d0d7de',
+        'darkmode': {
+            'background': 'transparent',
+            'primaryColor': '#21262d',
+            'primaryText': '#c9d1d9',
+            'primaryBorderColor': '#30363d',
+            'lineColor': '#30363d'
+        }
+    }
+}}%%
+
 graph TD
+    %% Styling
+    classDef aws fill:#ff9900,color:#000,stroke:#e67e22,stroke-width:2px
+    classDef proxmox fill:#e74c3c,color:#fff,stroke:#c0392b,stroke-width:2px
+    classDef storage fill:#9b59b6,color:#fff,stroke:#8e44ad,stroke-width:2px
+    classDef service fill:#2ecc71,color:#000,stroke:#27ae60,stroke-width:2px
+    classDef user fill:#3498db,color:#fff,stroke:#2980b9,stroke-width:2px
+    classDef public fill:#f1c40f,color:#000,stroke:#f39c12,stroke-width:2px
+    classDef internet fill:#95a5a6,color:#fff,stroke:#7f8c8d,stroke-width:2px
+
     %% Nodes
-    User[User]
-    Public[Public Users]
-    Internet[Internet]
-    EC2[EC2 t3.micro]
-    S3[S3 Bucket]
-    DB[DynamoDB]
-    PVE[Proxmox Node]
-    PublicApp[Public Apps]
-    PrivateApp[Private Apps]
+    User[User]:::user
+    Public[Public Users]:::public
+    Internet[Internet]:::internet
+    EC2[EC2 t3.micro]:::aws
+    S3[S3 Bucket]:::storage
+    DB[DynamoDB]:::storage
+    PVE[Proxmox Node]:::proxmox
+    PublicApp[Public Apps]:::service
+    PrivateApp[Private Apps]:::service
     
     %% AWS Group
     subgraph AWS[AWS Cloud]
@@ -75,6 +102,11 @@ graph TD
     EC2 -->|Private| PrivateApp
     EC2 <-->|State| S3
     EC2 <-->|Locks| DB
+    
+    %% Apply styles to groups
+    class AWS,Proxmox fill-opacity:0.1,stroke-dasharray: 5 5
+    class AWS stroke:#ff9900
+    class Proxmox stroke:#e74c3c
 ```
 *Figure 1: Complete system architecture showing all components and their interactions*
 
