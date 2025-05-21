@@ -4,148 +4,135 @@ This repository implements a GitOps workflow for managing a Proxmox server with 
 
 ## ✨ Features
 
-- **Secure Remote Access**
-  - WireGuard VPN server on AWS EC2 instance
-  - Key-based SSH access to Proxmox node
-  - Fail2Ban protection for both VPN and SSH
-  - UFW firewall with strict port rules
+**Secure Remote Access**
+* WireGuard VPN server on AWS EC2 instance
+* Key-based SSH access to Proxmox node
+* Fail2Ban protection for both VPN and SSH
+* UFW firewall with strict port rules
 
-- **Public-Facing Services**
-  - Nginx reverse proxy on AWS EC2 instance
-  - Let's Encrypt SSL certificates
-  - Support for both public and private services
-  - WebSocket and HTTP/2 support
+**Public-Facing Services**
+* Nginx reverse proxy on AWS EC2 instance
+* Let's Encrypt SSL certificates
+* Support for both public and private services
+* WebSocket and HTTP/2 support
 
-- **Infrastructure Components**
-  - AWS t3.micro EC2 instance for proxy and VPN
-  - S3 bucket for Terraform state
-  - DynamoDB for state locking
-  - Proxmox VE node with LXC containers and VMs
+**Infrastructure Components**
+* AWS t3.micro EC2 instance for proxy and VPN
+* S3 bucket for Terraform state
+* DynamoDB for state locking
+* Proxmox VE node with LXC containers and VMs
 
-- **Service Architecture**
-  - Public applications (web apps, portals)
-  - Private services (Plex, management)
-  - Separate network zones for security
-  - State management with AWS services
+**Service Architecture**
+* Public applications (web apps, portals)
+* Private services (Plex, management)
+* Separate network zones for security
+* State management with AWS services
 
-- **Security Features**
-  - UFW firewall on both AWS and Proxmox
-  - Rate limiting on Nginx
-  - IP filtering and access control
-  - Regular security updates and monitoring
+**Security Features**
+* UFW firewall on both AWS and Proxmox
+* Rate limiting on Nginx
+* IP filtering and access control
+* Regular security updates and monitoring
 
 ## 📊 Interactive Architecture Diagrams
 
 ### 1. System Overview
 
 ```mermaid
-%%{init: {
-    'theme': 'base',
-    'themeVariables': {
-        'background': 'transparent',
-        'primaryColor': '#f8f9fa',
-        'primaryText': '#24292f',
-        'primaryBorderColor': '#d0d7de',
-        'lineColor': '#d0d7de',
-        'darkmode': {
-            'background': 'transparent',
-            'primaryColor': '#21262d',
-            'primaryText': '#c9d1d9',
-            'primaryBorderColor': '#30363d',
-            'lineColor': '#30363d'
-        }
-    }
-}}%%
-
 graph TD
-    %% Styling
+    %% Define styles
+    classDef aws fill:#FF9900,color:white,stroke:#333,stroke-width:2px
+    classDef proxmox fill:#E6522C,color:white,stroke:#333,stroke-width:2px
+    classDef client fill:#4285F4,color:white,stroke:#333,stroke-width:2px
+    classDef public fill:#34A853,color:white,stroke:#333,stroke-width:2px
+    classDef storage fill:#673AB7,color:white,stroke:#333,stroke-width:2px
+
+    %% Clients and Public Internet
+    User["User (You)"]:::client
+    Public["Public Users"]:::public
+    Internet["Internet"]:::public
     
-    %% Define nodes with simplified styling
-    User["👤 User"]
-    Public["🌍 Public User"]
-    Internet["🌐 Internet"]
-    EC2["EC2 Instance\n- Nginx Reverse Proxy\n- WireGuard VPN\n- Fail2Ban"]
-    PVE["Proxmox VE"]
-    PublicApp["Public Services\n- Web Apps\n- APIs"]
-    PrivateApp["Private Services\n- Databases\n- Management"]
-    S3["S3 Bucket\n- Terraform State\n- Backups"]
-    DB["DynamoDB\n- State Locks"]
-    
-    %% Groupings with solid background
+    %% AWS Components
     subgraph AWS[AWS Cloud]
-        EC2
-        S3
-        DB
+        EC2["EC2 Instance\nNginx + WireGuard + UFW"]:::aws
+        
+        subgraph S3[S3 & DynamoDB]
+            S3Bucket["S3 State Storage"]
+            DynamoDB["DynamoDB Locks"]
+        end
     end
     
+    %% Proxmox Components
     subgraph Proxmox[Proxmox VE]
-        PVE
-        PublicApp
-        PrivateApp
+        PVE["Proxmox Node\nLXC + VMs"]:::proxmox
+        
+        subgraph Services
+            PublicApp["Public Services"]
+            PrivateApp["Private Services"]
+        end
     end
     
-    %% Connections
-    User -->|WireGuard| EC2
-    User -->|SSH| EC2
-    Public -->|HTTP/HTTPS| Internet
-    Internet -->|Proxy| EC2
-    EC2 <-->|VPN| PVE
-    EC2 -->|Public| PublicApp
-    EC2 -->|Private| PrivateApp
-    EC2 <-->|State| S3
-    EC2 <-->|Locks| DB
+    %% Network Flows - Using simple arrows with numbers only
+    User -->|1| EC2
+    User -->|2| EC2
+    Public -->|3| Internet
+    Internet -->|4| EC2
+    EC2 <-->|5| PVE
+    EC2 -->|6| PublicApp
+    EC2 -->|7| PrivateApp
+    EC2 <-->|8| S3Bucket
+    EC2 <-->|9| DynamoDB
     
-    %% Style groups with solid backgrounds
-    class AWS fill:#fff3e0,stroke:#ff9900,stroke-width:2px
-    class Proxmox fill:#ffebee,stroke:#e74c3c,stroke-width:2px
+    %% Styling
+    style AWS fill:#f9f9f9,stroke:#FF9900,stroke-width:2px,stroke-dasharray: 5 5
+    style Proxmox fill:#f9f9f9,stroke:#E6522C,stroke-width:2px,stroke-dasharray: 5 5
+    style Services fill:#f0f0f0,stroke:#666,stroke-width:1px
 ```
 *Figure 1: Complete system architecture showing all components and their interactions*
 
 ### 2. Network Flow Sequence
 
 ```mermaid
-%%{init: {'theme': 'neutral'}}%%
 sequenceDiagram
-    %% Define participants
     participant U as User
-    participant P as Public
-    participant N as Nginx
+    participant P as Public User
+    participant N as Nginx (EC2)
     participant W as WireGuard
-    participant S as Services
-    participant A as AWS
-
+    participant S as Proxmox Services
+    participant A as AWS S3/DynamoDB
+    
     %% VPN Connection Flow
-    rect rgba(52, 152, 219, 0.1)
-        Note over U,W: 🔒 Secure VPN Access
+    rect rgba(200, 220, 255, 0.3)
+        Note over U,W: Secure VPN Access
         U->>+W: 1. Initiate VPN Connection
-        W-->>-U: 2. Authenticate & Establish
-        U->>+S: 3. Access Private Services
-        S-->>-U: 4. Service Response
+        W-->>-U: 2. Authenticate
+        U->>+S: 3. Access Services
+        S-->>-U: 4. Response
     end
     
     %% Public Access Flow
-    rect rgba(46, 204, 113, 0.1)
-        Note over P,N: 🌐 Public Web Access
-        P->>+N: 1. HTTP/HTTPS Request
-        N->>+S: 2. Forward to Service
-        S-->>-N: 3. Service Response
-        N-->>-P: 4. Return Response
+    rect rgba(200, 255, 220, 0.3)
+        Note over P,N: Public Web Access
+        P->>+N: 1. HTTP Request
+        N->>+S: 2. Forward
+        S-->>-N: 3. Response
+        N-->>-P: 4. Return
     end
     
     %% State Management
-    rect rgba(155, 89, 182, 0.1)
-        Note over N,A: 🔄 State Management
+    rect rgba(255, 240, 200, 0.3)
+        Note over N,A: State Management
         N->>+A: 1. Lock State
         N->>A: 2. Update State
-        A-->>-N: 3. Confirm Update
+        A-->>-N: 3. Confirm
     end
     
     %% Security Monitoring
-    rect rgba(231, 76, 60, 0.1)
-        Note over W: 🛡️ Security
-        loop Fail2Ban Protection
-            W->>W: Monitor Auth Attempts
-            alt Too Many Failures
+    rect rgba(255, 200, 200, 0.3)
+        Note over W: Security
+        loop Protection
+            W->>W: Monitor Logins
+            alt Too Many Fails
                 W->>W: Block IP
             end
         end
@@ -157,52 +144,49 @@ sequenceDiagram
 
 ```mermaid
 graph TB
-    %% Set white background and default styles
-    classDef default fill:#ffffff,stroke:#333,stroke-width:2px,color:#333
-    
-    %% Define node styles
-    classDef firewall fill:#ffcdd2,stroke:#e53935,stroke-width:2px,color:#000
-    classDef vpn fill:#bbdefb,stroke:#1e88e5,stroke-width:2px,color:#000
-    classDef proxy fill:#c8e6c9,stroke:#43a047,stroke-width:2px,color:#000
-    classDef service fill:#e1bee7,stroke:#8e24aa,stroke-width:2px,color:#000
-    classDef storage fill:#cfd8dc,stroke:#546e7a,stroke-width:2px,color:#000
-    classDef internet fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    %% Define styles
+    classDef firewall fill:#FF5722,color:white,stroke:#333
+    classDef vpn fill:#3F51B5,color:white,stroke:#333
+    classDef proxy fill:#4CAF50,color:white,stroke:#333
+    classDef service fill:#9C27B0,color:white,stroke:#333
+    classDef storage fill:#607D8B,color:white,stroke:#333
     
     %% Security Layers
     subgraph External[External Protection]
-        Internet[Internet]:::internet
-        UFW[UFW Firewall\nPorts: 22,80,443,51820]:::firewall
+        Internet[Internet]
+        UFW[UFW Firewall Ports 22,80,443,51820]:::firewall
     end
     
     subgraph EC2[EC2 Instance]
-        Nginx[Nginx Reverse Proxy\nSSL + Rate Limiting]:::proxy
-        WireGuard[WireGuard VPN\n256-bit Encryption]:::vpn
-        Fail2Ban[Fail2Ban Protection]:::firewall
+        Nginx[Nginx Reverse Proxy]:::proxy
+        WireGuard[WireGuard VPN]:::vpn
+        Fail2Ban[Fail2Ban]:::firewall
     end
     
     subgraph Internal[Internal Network]
-        Proxmox[Proxmox VE]:::storage
-        Public[Public Services]:::service
-        Private[Private Services]:::service
+        Proxmox[Proxmox VE]
+        subgraph Services[Services]
+            Public[Public Services]:::service
+            Private[Private Services]:::service
+        end
     end
     
     %% Data Flow
-    Internet -->|1. Public Traffic| UFW
-    UFW -->|2. Filtered Traffic| Nginx
-    Nginx <-->|3. API Calls| Public
-    
-    Internet -->|4. VPN Traffic| UFW
-    UFW -->|5. To VPN| WireGuard
-    WireGuard <-->|6. Secure Tunnel| Private
+    Internet -->|1| UFW
+    UFW -->|2| Nginx
+    Nginx <-->|3| Public
+    Internet -->|4| UFW
+    UFW -->|5| WireGuard
+    WireGuard <-->|6| Private
     
     %% Security Monitoring
-    Nginx -->|7. Logs| Fail2Ban
-    WireGuard -->|8. Auth Logs| Fail2Ban
+    Nginx -->|7| Fail2Ban
+    WireGuard -->|8| Fail2Ban
     
     %% Styling
-    style External fill:#fff8e1,stroke:#ffc107,stroke-width:2px
-    style EC2 fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
-    style Internal fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px
+    style External fill:#FFF3E0,stroke:#FF9800,stroke-width:2px,stroke-dasharray: 5 5
+    style EC2 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px,stroke-dasharray: 5 5
+    style Internal fill:#E8EAF6,stroke:#3F51B5,stroke-width:2px,stroke-dasharray: 5 5
 ```
 *Figure 3: Security layers and protection mechanisms*
 
