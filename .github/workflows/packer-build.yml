@@ -1,20 +1,17 @@
+# .github/workflows/packer-build.yml
 name: packer-build
-
 on:
   workflow_dispatch:
   push:
-    paths:
-      - 'packer/**'
+    paths: ['packer/**']
 
 jobs:
   build-talos-template:
     runs-on: [self-hosted, proxmox]
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Packer
         uses: hashicorp/setup-packer@v2
-
       - name: Build Talos template on Proxmox
         working-directory: packer
         env:
@@ -23,8 +20,8 @@ jobs:
           packer init .
           packer build \
             -var "proxmox_url=${{ secrets.PROXMOX_URL }}" \
-            -var "proxmox_token_id=${{ secrets.PROXMOX_TOKEN_ID }}" \
-            -var "proxmox_token_secret=${{ secrets.PROXMOX_TOKEN_SECRET }}" \
+            -var "proxmox_username=${{ secrets.PROXMOX_USERNAME }}" \
+            -var "proxmox_password=${{ secrets.PROXMOX_PASSWORD }}" \
             -var "proxmox_node=${{ secrets.PROXMOX_NODE }}" \
             -var "storage_pool=${{ secrets.PROXMOX_STORAGE || 'local-lvm' }}" \
             -var "network_bridge=${{ secrets.PROXMOX_BRIDGE || 'vmbr0' }}" \
