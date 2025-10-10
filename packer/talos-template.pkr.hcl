@@ -1,6 +1,5 @@
-// Build a Talos VM (powered off) on Proxmox using the hashicorp/proxmox plugin.
-// We intentionally do NOT call "template" here because proxmox-iso (v1.2.3) doesn't
-// support it. We'll convert to a template later from Terraform/Proxmox API.
+// Minimal Talos template build on Proxmox using the hashicorp/proxmox "clone" builder.
+// This imports the Talos nocloud image, creates a VM, and converts it to a TEMPLATE.
 
 packer {
   required_plugins {
@@ -11,76 +10,32 @@ packer {
   }
 }
 
-variable "proxmox_url" {
-  type = string
-}
+# --- Inputs ---
+variable "proxmox_url"        { type = string }                # e.g. https://REDACTED_IP:8006/api2/json
+variable "proxmox_username"   { type = string }                # e.g. root@pam
+variable "proxmox_password"   { type = string sensitive = true }
+variable "proxmox_node"       { type = string }                # e.g. pve
 
-variable "proxmox_username" {
-  type = string
-}
+variable "storage_pool"       { type = string  default = "local-lvm" }  # where the VM disk lives
+variable "network_bridge"     { type = string  default = "vmbr0" }
 
-variable "proxmox_password" {
-  type      = string
-  sensitive = true
-}
+variable "template_name"      { type = string  default = "template-talos" }
+variable "talos_version"      { type = string  default = "v1.7.4" }
 
-variable "proxmox_node" {
-  type = string
-}
-
-variable "storage_pool" {
+# Talos "nocloud" disk image (what the blog uses)
+variable "talos_image_url" {
   type    = string
-  default = "local-lvm"
+  # Use nocloud image (supports cloud-init). The builder imports this directly.
+  default = "https://github.com/siderolabs/talos/releases/download/v1.7.4/nocloud-amd64.img.xz"
 }
 
-variable "network_bridge" {
-  type    = string
-  default = "vmbr0"
-}
+variable "vm_cores"   { type = number default = 2 }
+variable "vm_memory"  { type = number default = 4096 }  # MB
+variable "vm_disk_gb" { type = number default = 8 }
 
-variable "iso_storage_pool" {
-  type    = string
-  default = "local" // your directory store that holds ISO images
-}
-
-variable "template_name" {
-  type    = string
-  default = "template-talos"
-}
-
-variable "talos_version" {
-  type    = string
-  default = "v1.7.4"
-}
-
-# Talos ISO for the proxmox-iso builder
-variable "talos_iso_url" {
-  type    = string
-  default = "https://github.com/siderolabs/talos/releases/download/v1.7.4/metal-amd64.iso"
-}
-
-# Optional checksum (leave empty to skip)
-variable "talos_iso_checksum" {
-  type    = string
-  default = "" # e.g., "sha256:<hash>"
-}
-
-variable "vm_cores" {
-  type    = number
-  default = 2
-}
-
-variable "vm_memory" {
-  type    = number
-  default = 4096
-}
-
-variable "vm_disk_gb" {
-  type    = number
-  default = 8
-}
-
-source "proxmox-iso" "talos" {
+# --- Builder ---
+# Use the "clone" builder flavor. In this plugin this is exposed as "proxmox-clone".
+source "proxmox-clone" "talos" {
   proxmox_url              = var.proxmox_url
   username                 = var.proxmox_username
   password                 = var.proxmox_password
@@ -89,23 +44,20 @@ source "proxmox-iso" "talos" {
   node    = var.proxmox_node
   vm_name = "${var.template_name}-${var.talos_version}"
 
-  # ISO boot (download to ISO storage, then mount)
-  iso_url          = var.talos_iso_url
-  iso_checksum     = length(var.talos_iso_checksum) > 0 ? var.talos_iso_checksum : null
-  iso_storage_pool = var.iso_storage_pool
-  unmount_iso      = true
+  # Import the Talos disk image directly from URL
+  disk_image_url = var.talos_image_url
+
+  # Primary disk target (created from imported image)
+  disks {
+    type         = "scsi"
+    storage_pool = var.storage_pool
+    disk_size    = "${var.vm_disk_gb}G"
+  }
 
   # Network
   network_adapters {
     model  = "virtio"
     bridge = var.network_bridge
-  }
-
-  # Disk (the "storage_pool" is valid ONLY inside this block)
-  disks {
-    type         = "scsi"
-    storage_pool = var.storage_pool
-    disk_size    = "${var.vm_disk_gb}G"
   }
 
   # Hardware
@@ -114,16 +66,18 @@ source "proxmox-iso" "talos" {
   scsi_controller = "virtio-scsi-pci"
   bios            = "seabios"
 
-  # Cloud-Init drive for per-node configs later
+  # Attach Cloud-Init drive so clones can inject talos configs
   cloud_init              = true
   cloud_init_storage_pool = var.storage_pool
 
-  # Talos has no SSH during ISO boot; no guest comms.
+  # Make this a Proxmox TEMPLATE at the end (the blog’s flow)
+  convert_to_template = true
+
+  # Talos installer has no SSH during build
   communicator = "none"
-  boot_wait    = "5s"
 }
 
 build {
   name    = "talos-template"
-  sources = ["source.proxmox-iso.talos"]
+  sources = ["source.proxmox-clone.talos"]
 }
