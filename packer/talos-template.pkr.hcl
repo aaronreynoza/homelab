@@ -1,5 +1,6 @@
 // Build a Talos VM TEMPLATE on Proxmox using the hashicorp/proxmox plugin.
 // Boots from the Talos ISO and converts the VM to a template.
+// Cloud-Init disk is attached so clones can inject Talos configs later.
 
 packer {
   required_plugins {
@@ -10,19 +11,42 @@ packer {
   }
 }
 
-variable "proxmox_url"      { type = string }
-variable "proxmox_username" { type = string }
+variable "proxmox_url" {
+  type = string
+}
+
+variable "proxmox_username" {
+  type = string
+}
+
 variable "proxmox_password" {
   type      = string
   sensitive = true
 }
-variable "proxmox_node"     { type = string }
 
-variable "storage_pool"   { type = string  default = "local-lvm" }
-variable "network_bridge" { type = string  default = "vmbr0" }
+variable "proxmox_node" {
+  type = string
+}
 
-variable "template_name"  { type = string  default = "template-talos" }
-variable "talos_version"  { type = string  default = "v1.7.4" }
+variable "storage_pool" {
+  type    = string
+  default = "local-lvm"
+}
+
+variable "network_bridge" {
+  type    = string
+  default = "vmbr0"
+}
+
+variable "template_name" {
+  type    = string
+  default = "template-talos"
+}
+
+variable "talos_version" {
+  type    = string
+  default = "v1.7.4"
+}
 
 # Talos ISO for the proxmox-iso builder
 variable "talos_iso_url" {
@@ -36,9 +60,20 @@ variable "talos_iso_checksum" {
   default = "" # e.g., "sha256:<hash>"
 }
 
-variable "vm_cores"   { type = number default = 2 }
-variable "vm_memory"  { type = number default = 4096 }
-variable "vm_disk_gb" { type = number default = 8 }
+variable "vm_cores" {
+  type    = number
+  default = 2
+}
+
+variable "vm_memory" {
+  type    = number
+  default = 4096
+}
+
+variable "vm_disk_gb" {
+  type    = number
+  default = 8
+}
 
 source "proxmox-iso" "talos" {
   proxmox_url              = var.proxmox_url
