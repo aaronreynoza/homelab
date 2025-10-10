@@ -1,23 +1,30 @@
-# .github/workflows/packer-build.yml
 name: packer-build
+
 on:
   workflow_dispatch:
   push:
-    paths: ['packer/**']
+    paths:
+      - "packer/**"
 
 jobs:
   build-talos-template:
     runs-on: [self-hosted, proxmox]
+    timeout-minutes: 45
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Setup Packer
         uses: hashicorp/setup-packer@v2
+        with:
+          version: latest
+
       - name: Build Talos template on Proxmox
-        working-directory: packer
         env:
           PACKER_LOG: "1"
         run: |
-          packer init .
+          packer init packer
           packer build \
             -var "proxmox_url=${{ secrets.PROXMOX_URL }}" \
             -var "proxmox_username=${{ secrets.PROXMOX_USERNAME }}" \
@@ -27,5 +34,6 @@ jobs:
             -var "network_bridge=${{ secrets.PROXMOX_BRIDGE || 'vmbr0' }}" \
             -var "template_name=template-talos" \
             -var "talos_version=${{ vars.TALOS_VERSION || 'v1.7.4' }}" \
-            -var "talos_image_url=${{ vars.TALOS_IMAGE_URL || 'https://github.com/siderolabs/talos/releases/download/v1.7.4/nocloud-amd64.img.xz' }}" \
-            talos-template.pkr.hcl
+            -var "talos_iso_url=${{ vars.TALOS_ISO_URL || 'https://github.com/siderolabs/talos/releases/download/v1.7.4/metal-amd64.iso' }}" \
+            -var "talos_iso_checksum=${{ vars.TALOS_ISO_CHECKSUM || '' }}" \
+            packer/talos-template.pkr.hcl
