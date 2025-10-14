@@ -16,7 +16,7 @@ source "proxmox-iso" "talos" {
 
   boot_iso {
     type     = "scsi"
-    iso_file = var.base_iso_file      # e.g. local:iso/archlinux-2024.06.01-x86_64.iso
+    iso_file = "${var.base_iso_file}"
     unmount  = true
   }
 
