@@ -15,10 +15,11 @@ source "proxmox-iso" "talos" {
   insecure_skip_tls_verify = true
 
   boot_iso {
-    type     = "scsi"
-    iso_file = "${var.base_iso_file}"
+    type     = "ide"
+    iso_file = var.base_iso_file
     unmount  = true
   }
+
 
   scsi_controller = "virtio-scsi-single"
 
