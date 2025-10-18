@@ -47,3 +47,38 @@ variable "config_isos" {
   type    = map(string)
   default = {}
 }
+
+# --- Talos template metadata (used by null_resource and clones) ---
+variable "template_vmid" {
+  description = "Numeric VMID to use for the Talos template in Proxmox (e.g., 9000)"
+  type        = number
+}
+
+variable "template_name" {
+  description = "Name of the Talos template VM to create/clone (e.g., talos-tpl)"
+  type        = string
+}
+
+# --- Simple cluster shape: map of nodes keyed by VM name ---
+variable "nodes" {
+  description = "Map of nodes to create (key = VM name)"
+  type = map(object({
+    memory    = number         # MB
+    cores     = number
+    os_disk   = string         # e.g., "20G"
+    data_disk = string         # e.g., "100G"; use null for none
+  }))
+  default = {}                 # empty = create nothing
+}
+
+# --- Simple cluster shape: map of nodes keyed by VM name ---
+variable "nodes" {
+  description = "Map of nodes to create (key = VM name)"
+  type = map(object({
+    memory    = number         # MB
+    cores     = number
+    os_disk   = string         # e.g., "20G"
+    data_disk = string         # e.g., "100G"; use null for none
+  }))
+  default = {}                 # empty = create nothing
+}

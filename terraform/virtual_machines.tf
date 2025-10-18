@@ -1,5 +1,5 @@
 resource "proxmox_vm_qemu" "talos_nodes" {
-  for_each = local.all_nodes
+  for_each = var.nodes
 
   depends_on = [null_resource.talos_template]
 
@@ -17,9 +17,8 @@ resource "proxmox_vm_qemu" "talos_nodes" {
   scsihw  = "virtio-scsi-single"
   boot    = "order=scsi0"
 
-  # Attach Talos machine config ISO (per node) as a CD-ROM (ide2)
-  # Provide the path via var.config_isos["<vmname>"] = "local:iso/<vm>-cidata.iso"
-  # If missing, Terraform will error (which is good — you must supply configs).
+  # Require a per-node cidata ISO path (e.g., local:iso/w1-cidata.iso)
+  # var.config_isos must contain an entry for each node name
   ide2 = "${var.config_isos[each.key]},media=cdrom"
 
   network {
@@ -27,15 +26,14 @@ resource "proxmox_vm_qemu" "talos_nodes" {
     bridge = var.bridge
   }
 
-  # Resize OS disk if you want bigger than the template’s imported size
+  # Grow OS disk beyond template size if desired
   disk {
     type    = "scsi"
     storage = var.vm_storage
     size    = each.value.os_disk
-    # This ensures scsi0 is present (the clone already has one); provider will handle grow
   }
 
-  # Worker-only: attach a second disk for Longhorn data (e.g., /dev/sdb or /dev/vdb)
+  # Optional data disk (only if not null)
   dynamic "disk" {
     for_each = each.value.data_disk == null ? [] : [each.value.data_disk]
     content {
@@ -44,7 +42,6 @@ resource "proxmox_vm_qemu" "talos_nodes" {
       size     = disk.value
       iothread = true
       ssd      = true
-      # Provider will assign next available slot (e.g., scsi1)
     }
   }
 }
