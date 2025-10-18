@@ -54,26 +54,35 @@ jobs:
       - name: Start ssh-agent and add key
         uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh-private-key: |
-            ${{ secrets.PROXMOX_SSH_PRIVATE_KEY }}
+          ssh-private-key: ${{ secrets.PROXMOX_SSH_PRIVATE_KEY }}
 
-      # Write known_hosts from a secret (one line per host key)
-      - name: Write known_hosts
+
+      - name: Write known_hosts from secret
         run: |
           set -euo pipefail
           mkdir -p ~/.ssh
           printf '%s\n' "${{ secrets.PROXMOX_KNOWN_HOST }}" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Terraform Init (S3 backend)
+      - name: Reset provider lock/cache
         working-directory: terraform
         run: |
-          terraform init \
+          rm -f .terraform.lock.hcl
+          rm -rf .terraform
+
+      - name: Terraform Init (S3 backend, upgrade providers)
+        working-directory: terraform
+        run: |
+          terraform init -upgrade \
             -backend-config="bucket=${{ vars.TF_BACKEND_BUCKET }}" \
             -backend-config="key=${{ vars.TF_BACKEND_PREFIX }}/infra.tfstate" \
             -backend-config="region=${{ vars.AWS_REGION }}" \
             -backend-config="dynamodb_table=${{ vars.TF_BACKEND_TABLE }}" \
             -backend-config="encrypt=true"
+
+      - name: Show loaded providers
+        working-directory: terraform
+        run: terraform providers
 
       - name: Terraform Validate
         working-directory: terraform
