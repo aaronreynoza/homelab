@@ -1,12 +1,9 @@
 locals {
-  # this is the Proxmox datastore + ISO name your script writes
   cidata_map = { for name, _ in var.nodes : name => "local:iso/${name}-cidata.iso" }
 }
 
 resource "proxmox_vm_qemu" "talos_nodes" {
   for_each = var.nodes
-
-  # depend on the single builder (NOT per-node)
   depends_on = [null_resource.cidata]
 
   name        = each.key
@@ -23,10 +20,7 @@ resource "proxmox_vm_qemu" "talos_nodes" {
   scsihw  = "virtio-scsi-single"
   boot    = "order=scsi0"
 
-  # attach the prebuilt cidata ISO
-  cdrom = local.cidata_map[each.key]
-
-  ide2 = "local:iso/${each.key}-cidata.iso,media=cdrom"
+  iso = local.cidata_map[each.key]
 
   network {
     model  = "virtio"
