@@ -17,7 +17,7 @@ resource "proxmox_vm_qemu" "talos_nodes" {
   scsihw  = "virtio-scsi-single"
   boot    = "order=scsi0"
 
-  cdrom = var.config_isos[each.key] 
+  ide2 = "${var.config_isos[each.key]},media=cdrom"
 
   network {
     model  = "virtio"
