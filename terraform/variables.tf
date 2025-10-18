@@ -73,3 +73,21 @@ variable "talos_image_url" {
   type        = string
   default     = ""
 }
+
+variable "cluster_endpoint" {
+  type        = string
+  description = "Kubernetes API endpoint (e.g., https://192.168.100.101:6443)"
+  default     = ""
+}
+
+variable "cluster_name" {
+  type        = string
+  description = "Cluster name"
+  default     = "talos"
+}
+
+/* public SSH key that should be allowed to login (used by cidata). */
+variable "ssh_authorized_key" {
+  type        = string
+  description = "Your SSH public key"
+}

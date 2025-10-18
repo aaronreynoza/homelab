@@ -26,6 +26,8 @@ resource "proxmox_vm_qemu" "talos_nodes" {
   # attach the prebuilt cidata ISO
   cdrom = local.cidata_map[each.key]
 
+  ide2 = "local:iso/${each.key}-cidata.iso,media=cdrom"
+
   network {
     model  = "virtio"
     bridge = var.bridge
