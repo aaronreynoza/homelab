@@ -56,11 +56,27 @@ jobs:
         with:
           ssh-private-key: |
             ${{ secrets.PROXMOX_SSH_PRIVATE_KEY }}
+      
+      - name: Resolve SSH host
+        id: resolve_host
+        shell: bash
+        run: |
+          set -euo pipefail
+          host="${SSH_HOST:-}"
+          if [[ -z "${host}" || "${host}" == "pve" ]]; then
+            host_from_url="$(awk -F[/:] '{print $4}' <<< "${TF_VAR_proxmox_api_url}")"
+            echo "Derived host from API URL: ${host_from_url}"
+            echo "SSH_HOST=${host_from_url}" >> "$GITHUB_ENV"
+          fi
+          echo "Using SSH_HOST=${host:-$host_from_url}"
+          (getent hosts "${host:-$host_from_url}" || true) >/dev/null
 
       - name: Add Proxmox host to known_hosts
         run: |
+          set -euo pipefail
           mkdir -p ~/.ssh
-          ssh-keyscan -T 10 "${SSH_HOST}" >> ~/.ssh/known_hosts
+          # prefer IPv4 and give it a timeout
+          ssh-keyscan -4 -T 10 "${SSH_HOST}" >> ~/.ssh/known_hosts
 
       - name: Sanity check SSH connectivity
         run: |
