@@ -19,3 +19,6 @@ nodes = {
   w1 = { memory = 8192, cores = 4, os_disk = "20G", data_disk = "500G" }
   w2 = { memory = 8192, cores = 4, os_disk = "20G", data_disk = "500G" }
 }
+
+proxmox_api_url          = "https://REDACTED_IP:8006/api2/json"
+proxmox_api_token_secret = "c3c416bb-dd9d-426e-bcc4-17f25acf8676"
