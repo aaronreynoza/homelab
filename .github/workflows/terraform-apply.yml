@@ -56,31 +56,19 @@ jobs:
         with:
           ssh-private-key: |
             ${{ secrets.PROXMOX_SSH_PRIVATE_KEY }}
-      
-      - name: Resolve SSH host
-        id: resolve_host
-        shell: bash
-        run: |
-          set -euo pipefail
-          host="${SSH_HOST:-}"
-          if [[ -z "${host}" || "${host}" == "pve" ]]; then
-            host_from_url="$(awk -F[/:] '{print $4}' <<< "${TF_VAR_proxmox_api_url}")"
-            echo "Derived host from API URL: ${host_from_url}"
-            echo "SSH_HOST=${host_from_url}" >> "$GITHUB_ENV"
-          fi
-          echo "Using SSH_HOST=${host:-$host_from_url}"
-          (getent hosts "${host:-$host_from_url}" || true) >/dev/null
 
-      - name: Add Proxmox host to known_hosts
+      # Write known_hosts from a secret (one line per host key)
+      - name: Write known_hosts
         run: |
           set -euo pipefail
           mkdir -p ~/.ssh
-          # prefer IPv4 and give it a timeout
-          ssh-keyscan -4 -T 10 "${SSH_HOST}" >> ~/.ssh/known_hosts
-
+          printf '%s\n' "${{ secrets.PROXMOX_KNOWN_HOST }}" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      
       - name: Sanity check SSH connectivity
         run: |
-          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "${SSH_USER}@${SSH_HOST}" "pveversion | head -1"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes \
+              "${SSH_USER}@${SSH_HOST}" "pveversion | head -1"
 
       - name: Terraform Init (S3 backend)
         working-directory: terraform
