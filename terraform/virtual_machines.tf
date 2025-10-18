@@ -17,21 +17,19 @@ resource "proxmox_vm_qemu" "talos_nodes" {
   scsihw  = "virtio-scsi-single"
   boot    = "order=scsi0"
 
-  ide2 = "${var.config_isos[each.key]},media=cdrom"
+  cdrom = var.config_isos[each.key]
 
   network {
     model  = "virtio"
     bridge = var.bridge
   }
 
-  # Grow OS disk beyond template size if desired
   disk {
     type    = "scsi"
     storage = var.vm_storage
     size    = each.value.os_disk
   }
 
-  # Optional data disk (only if not null)
   dynamic "disk" {
     for_each = each.value.data_disk == null ? [] : [each.value.data_disk]
     content {
