@@ -66,7 +66,7 @@ fi
 #######################################
 REMOTE_ISO_DIR="/var/lib/vz/template/iso"
 # Make sure the ISO dir exists on Proxmox
-ssh -o StrictHostKeyChecking=accept-new "${PM_SSH_TARGET}" "sudo mkdir -p '${REMOTE_ISO_DIR}' && sudo chown root:root '${REMOTE_ISO_DIR}'"
+ssh -o StrictHostKeyChecking=accept-new "${PM_SSH_TARGET}" "mkdir -p '${REMOTE_ISO_DIR}' && chown root:root '${REMOTE_ISO_DIR}'"
 
 #######################################
 # Work dir
@@ -115,10 +115,9 @@ EOF
       "${node_dir}/user-data" "${node_dir}/meta-data"
   fi
 
-  # Upload: scp to /tmp then move with sudo into the ISO store
   local remote_tmp="/tmp/${iso_name}"
   scp -o StrictHostKeyChecking=accept-new "${iso_path}" "${PM_SSH_TARGET}:${remote_tmp}"
-  ssh -o StrictHostKeyChecking=accept-new "${PM_SSH_TARGET}" "sudo mv '${remote_tmp}' '${REMOTE_ISO_DIR}/${iso_name}' && sudo chmod 0644 '${REMOTE_ISO_DIR}/${iso_name}'"
+  ssh -o StrictHostKeyChecking=accept-new "${PM_SSH_TARGET}" "mv '${remote_tmp}' '${REMOTE_ISO_DIR}/${iso_name}' && chmod 0644 '${REMOTE_ISO_DIR}/${iso_name}'"
 
   # Print the Proxmox storage reference path expected by Terraform
   echo "local:iso/${iso_name}"
