@@ -17,9 +17,7 @@ resource "proxmox_vm_qemu" "talos_nodes" {
   scsihw  = "virtio-scsi-single"
   boot    = "order=scsi0"
 
-  # Require a per-node cidata ISO path (e.g., local:iso/w1-cidata.iso)
-  # var.config_isos must contain an entry for each node name
-  ide2 = "${var.config_isos[each.key]},media=cdrom"
+  cdrom = var.config_isos[each.key] 
 
   network {
     model  = "virtio"
