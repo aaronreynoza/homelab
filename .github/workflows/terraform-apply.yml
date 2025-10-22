@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - "terraform/**"
+      - "scripts/**"
       - ".github/workflows/terraform-apply.yml"
 
 permissions:
@@ -16,16 +17,39 @@ jobs:
     runs-on: [self-hosted, linux, x64, proxmox]
 
     env:
-      # bpg/proxmox provider picks these up automatically
-      PROXMOX_VE_ENDPOINT:   ${{ vars.PROXMOX_API_URL }}/api2/json
-      PROXMOX_VE_API_TOKEN:  ${{ secrets.PROXMOX_TOKEN_ID }}=${{ secrets.PROXMOX_TOKEN_SECRET }}
-      PROXMOX_VE_INSECURE:   "true"
+      PROXMOX_VE_ENDPOINT:  ${{ vars.PROXMOX_API_URL }}/api2/json
+      PROXMOX_VE_API_TOKEN: ${{ secrets.PROXMOX_TOKEN_ID }}=${{ secrets.PROXMOX_TOKEN_SECRET }}
+      PROXMOX_VE_INSECURE:  "true"
+
+      PROXMOX_TOKEN_ID:     ${{ secrets.PROXMOX_TOKEN_ID }}
+      PROXMOX_TOKEN_SECRET: ${{ secrets.PROXMOX_TOKEN_SECRET }}
 
       TF_IN_AUTOMATION: "true"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Ensure tools & make scripts executable
+        run: |
+          set -euo pipefail
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+          if ! command -v xz >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y xz-utils
+          fi
+          chmod +x scripts/*.sh
+
+      # ---------- Image check/upload (no SSH, API only) ----------
+      - name: Check if Talos RAW image exists in Proxmox
+        id: check_image
+        run: scripts/check-image.sh
+
+      - name: Upload Talos RAW image if missing
+        if: steps.check_image.outputs.image_present != 'true'
+        run: scripts/upload-image.sh
+      # -----------------------------------------------------------
 
       - name: Configure AWS credentials (S3 backend)
         uses: aws-actions/configure-aws-credentials@v4
