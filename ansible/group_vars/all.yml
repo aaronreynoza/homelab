@@ -1,0 +1,11 @@
+# Point this to your kubeconfig (Talos or otherwise)
+kubeconfig_path: "~/.kube/config"
+
+# Namespace for Argo CD
+argocd_namespace: "argocd"
+
+# Helm release settings
+argocd_release_name: "argocd"
+argocd_chart_version: ""        # leave empty for latest; or pin e.g. "7.6.12"
+argocd_helm_repo_name: "argo"
+argocd_helm_repo_url: "https://argoproj.github.io/argo-helm"

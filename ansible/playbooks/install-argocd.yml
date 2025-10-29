@@ -1,0 +1,51 @@
+---
+- name: Install Argo CD via Helm
+  hosts: localhost
+  gather_facts: false
+
+  vars_files:
+    - "{{ playbook_dir }}/../group_vars/all.yml"
+
+  vars:
+    k8s_auth:
+      kubeconfig: "{{ kubeconfig_path | expanduser }}"
+  tasks:
+    - name: Add Argo Helm repo
+      kubernetes.core.helm_repository:
+        name: "{{ argocd_helm_repo_name }}"
+        repo_url: "{{ argocd_helm_repo_url }}"
+
+    - name: Render Helm values for Argo CD
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../../helm/argocd.yaml.j2"
+        dest: "{{ playbook_dir }}/.values.argocd.yaml"
+        mode: "0644"
+
+    - name: Install/Upgrade Argo CD
+      kubernetes.core.helm:
+        name: "{{ argocd_release_name }}"
+        chart_ref: "{{ argocd_helm_repo_name }}/argo-cd"
+        chart_version: "{{ argocd_chart_version | default(omit) }}"
+        release_namespace: "{{ argocd_namespace }}"
+        kubeconfig: "{{ k8s_auth.kubeconfig }}"
+        values_files:
+          - "{{ playbook_dir }}/.values.argocd.yaml"
+        wait: true
+        wait_timeout: 600s
+        create_namespace: true
+        atomic: true
+
+    - name: Wait for Argo CD server deployment to be ready
+      kubernetes.core.k8s_info:
+        api_version: apps/v1
+        kind: Deployment
+        namespace: "{{ argocd_namespace }}"
+        name: "argocd-server"
+        kubeconfig: "{{ k8s_auth.kubeconfig }}"
+      register: argocd_server_dep
+      until: >
+        argocd_server_dep.resources
+        and argocd_server_dep.resources[0].status.readyReplicas is defined
+        and argocd_server_dep.resources[0].status.readyReplicas|int > 0
+      retries: 30
+      delay: 10
