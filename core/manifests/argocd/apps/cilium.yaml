@@ -28,19 +28,7 @@ spec:
         autoDirectNodeRoutes: true
         ipv4NativeRoutingCIDR: "10.244.0.0/16"
         securityContext:
-          capabilities:
-            ciliumAgent:
-              - CHOWN
-              - KILL
-              - NET_ADMIN
-              - NET_RAW
-              - IPC_LOCK
-              - SYS_ADMIN
-              - SYS_RESOURCE
-              - DAC_OVERRIDE
-              - FOWNER
-              - SETGID
-              - SETUID
+          privileged: true
         hubble:
           enabled: true
           relay:
@@ -49,17 +37,16 @@ spec:
             enabled: true
         cgroup:
           autoMount:
-            enabled: true
+            enabled: false
           hostRoot: /sys/fs/cgroup
         operator:
           replicas: 1
   destination:
     server: https://kubernetes.default.svc
-    namespace: cilium
+    namespace: kube-system
   syncPolicy:
     automated:
       prune: false
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
       - ServerSideApply=true
