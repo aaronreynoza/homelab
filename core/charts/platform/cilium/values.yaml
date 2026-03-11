@@ -22,21 +22,11 @@ routingMode: native
 autoDirectNodeRoutes: true
 ipv4NativeRoutingCIDR: "10.244.0.0/16"
 
-# Security context required for Talos
+# Security context for Talos Linux
+# Talos restricts capability application for non-privileged containers,
+# so privileged mode is required for Cilium agent and init containers.
 securityContext:
-  capabilities:
-    ciliumAgent:
-      - CHOWN
-      - KILL
-      - NET_ADMIN
-      - NET_RAW
-      - IPC_LOCK
-      - SYS_ADMIN
-      - SYS_RESOURCE
-      - DAC_OVERRIDE
-      - FOWNER
-      - SETGID
-      - SETUID
+  privileged: true
 
 # Hubble observability
 hubble:
@@ -46,10 +36,10 @@ hubble:
   ui:
     enabled: true
 
-# Talos mounts cgroupv2
+# Talos already mounts cgroupv2 — do not let Cilium try to mount it
 cgroup:
   autoMount:
-    enabled: true
+    enabled: false
   hostRoot: /sys/fs/cgroup
 
 # Single-node operator (resource constrained)
