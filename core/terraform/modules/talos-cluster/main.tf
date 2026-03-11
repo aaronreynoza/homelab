@@ -15,12 +15,20 @@ terraform {
 }
 
 # Download Talos image to Proxmox
+# The Talos nocloud image is a raw disk image compressed with zstd (.raw.zst).
+# We store it as an ISO content type (the bpg provider imports it as a VM disk
+# via file_id), and explicitly decompress it with the "zst" algorithm.
+# NOTE: The image URL MUST use .raw.zst (not .raw.xz) because the bpg provider
+# only supports gz, lzo, zst, and bz2 decompression — NOT xz.
 resource "proxmox_virtual_environment_download_file" "talos_image" {
-  content_type = "iso"
-  datastore_id = var.image_datastore_id
-  node_name    = var.proxmox_node
-  url          = var.talos_image_url
-  file_name    = local.talos_image_filename
+  content_type            = "iso"
+  datastore_id            = var.image_datastore_id
+  node_name               = var.proxmox_node
+  url                     = var.talos_image_url
+  file_name               = local.talos_image_filename
+  decompression_algorithm = "zst"
+  overwrite               = true
+  overwrite_unmanaged     = true
 }
 
 # Control Plane VMs
@@ -77,7 +85,11 @@ module "workers" {
 }
 
 # Talos Machine Secrets
-resource "talos_machine_secrets" "this" {}
+resource "talos_machine_secrets" "this" {
+  lifecycle {
+    prevent_destroy = true
+  }
+}
 
 # Talos Client Configuration
 data "talos_client_configuration" "this" {
@@ -88,18 +100,69 @@ data "talos_client_configuration" "this" {
 
 # Control Plane Machine Configuration
 data "talos_machine_configuration" "control_plane" {
-  cluster_name     = var.cluster_name
-  cluster_endpoint = "https://${var.control_planes[0].ip_address}:6443"
-  machine_type     = "controlplane"
-  machine_secrets  = talos_machine_secrets.this.machine_secrets
+  cluster_name       = var.cluster_name
+  cluster_endpoint   = "https://${var.control_planes[0].ip_address}:6443"
+  machine_type       = "controlplane"
+  machine_secrets    = talos_machine_secrets.this.machine_secrets
+  talos_version      = var.talos_version
+  kubernetes_version = var.kubernetes_version
 }
 
 # Worker Machine Configuration
 data "talos_machine_configuration" "worker" {
-  cluster_name     = var.cluster_name
-  cluster_endpoint = "https://${var.control_planes[0].ip_address}:6443"
-  machine_type     = "worker"
-  machine_secrets  = talos_machine_secrets.this.machine_secrets
+  cluster_name       = var.cluster_name
+  cluster_endpoint   = "https://${var.control_planes[0].ip_address}:6443"
+  machine_type       = "worker"
+  machine_secrets    = talos_machine_secrets.this.machine_secrets
+  talos_version      = var.talos_version
+  kubernetes_version = var.kubernetes_version
+}
+
+locals {
+  # Shared config patches for all nodes (CP + workers)
+  common_config_patch = yamlencode({
+    machine = {
+      network = {
+        nameservers = var.nameservers
+      }
+    }
+    cluster = {
+      network = {
+        cni = {
+          name = "none"
+        }
+      }
+      proxy = {
+        disabled = true
+      }
+    }
+  })
+
+  # Worker-specific config patch (Longhorn data disk)
+  worker_config_patch = yamlencode({
+    machine = {
+      disks = [
+        {
+          device = "/dev/vdb"
+          partitions = [
+            {
+              mountpoint = var.longhorn_mount_path
+            }
+          ]
+        }
+      ]
+      kubelet = {
+        extraMounts = [
+          {
+            destination = var.longhorn_mount_path
+            type        = "bind"
+            source      = var.longhorn_mount_path
+            options     = ["bind", "rshared", "rw"]
+          }
+        ]
+      }
+    }
+  })
 }
 
 # Apply configuration to control planes
@@ -111,20 +174,7 @@ resource "talos_machine_configuration_apply" "control_plane" {
   machine_configuration_input = data.talos_machine_configuration.control_plane.machine_configuration
   node                        = each.value.ip_address
 
-  config_patches = [
-    yamlencode({
-      cluster = {
-        network = {
-          cni = {
-            name = "none" # Use Cilium instead
-          }
-        }
-        proxy = {
-          disabled = true # Cilium handles kube-proxy
-        }
-      }
-    })
-  ]
+  config_patches = [local.common_config_patch]
 }
 
 # Apply configuration to workers
@@ -136,47 +186,7 @@ resource "talos_machine_configuration_apply" "worker" {
   machine_configuration_input = data.talos_machine_configuration.worker.machine_configuration
   node                        = each.value.ip_address
 
-  config_patches = [
-    yamlencode({
-      cluster = {
-        network = {
-          cni = {
-            name = "none"
-          }
-        }
-        proxy = {
-          disabled = true
-        }
-      }
-    }),
-    # Longhorn volume configuration
-    yamlencode({
-      apiVersion = "v1alpha1"
-      kind       = "UserVolumeConfig"
-      name       = "longhorn"
-      provisioning = {
-        diskSelector = {
-          match = "disk.dev_path == '/dev/vdb' && !system_disk"
-        }
-        minSize = "${var.longhorn_min_size_gib}GiB"
-        grow    = true
-      }
-    }),
-    yamlencode({
-      machine = {
-        kubelet = {
-          extraMounts = [
-            {
-              destination = var.longhorn_mount_path
-              type        = "bind"
-              source      = var.longhorn_mount_path
-              options     = ["bind", "rshared", "rw"]
-            }
-          ]
-        }
-      }
-    })
-  ]
+  config_patches = [local.common_config_patch, local.worker_config_patch]
 }
 
 # Bootstrap the cluster
@@ -190,7 +200,7 @@ resource "talos_machine_bootstrap" "this" {
 # Health check
 data "talos_cluster_health" "this" {
   count      = var.skip_health_check ? 0 : 1
-  depends_on = [talos_machine_configuration_apply.control_plane, talos_machine_configuration_apply.worker]
+  depends_on = [talos_machine_bootstrap.this, talos_machine_configuration_apply.worker]
 
   client_configuration = data.talos_client_configuration.this.client_configuration
   control_plane_nodes  = [for cp in var.control_planes : cp.ip_address]
