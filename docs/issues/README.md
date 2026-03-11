@@ -12,6 +12,7 @@ These files are draft GitHub issues for collaborators to pick up after the initi
 | 004 | [Longhorn backup to TrueNAS](004-longhorn-backup-to-truenas.md) | Medium | Point-in-time recovery for volumes |
 | 005 | [Velero cluster backup to S3](005-velero-cluster-backup.md) | Medium | Full disaster recovery |
 | 006 | [Security hardening & DDoS protection](006-security-hardening-ddos-protection.md) | Medium | VPS is publicly exposed, paying clients need protection |
+| 007 | [Multi-router VLAN access](007-multi-router-vlan-access.md) | Medium | Devices on room wifi can't reach VLAN services (needs router static routes) |
 
 ## Converting to GitHub Issues
 
