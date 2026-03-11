@@ -1,4 +1,4 @@
 defaultSettings:
-  defaultReplicaCount: "1"
-  storageReservedPercentageForDefaultDisk: "1"
+  defaultReplicaCount: 1
+  storageMinimalAvailablePercentage: 1
   defaultDataPath: "/var/mnt/u-longhorn"

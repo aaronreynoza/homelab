@@ -1,5 +1,5 @@
 output "kubeconfig" {
-  description = "Kubernetes kubeconfig for the cluster"
+  description = "Kubernetes kubeconfig for the cluster (deprecated: use kubeconfig_raw)"
   value       = talos_cluster_kubeconfig.this.kubeconfig_raw
   sensitive   = true
 }
