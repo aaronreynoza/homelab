@@ -32,6 +32,9 @@ resource "proxmox_virtual_environment_vm" "vm" {
     enabled = var.qemu_agent_enabled
   }
 
+  # Explicitly boot from the virtio0 disk to avoid iPXE/network boot fallback
+  boot_order = ["virtio0"]
+
   network_device {
     bridge  = var.network_bridge
     vlan_id = each.value.vlan_id

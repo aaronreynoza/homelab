@@ -1,3 +1,21 @@
+variable "talos_version" {
+  description = "Talos Linux version (ensures provider generates compatible machine configs)"
+  type        = string
+  default     = "v1.11.3"
+}
+
+variable "kubernetes_version" {
+  description = "Kubernetes version to deploy (must be compatible with talos_version)"
+  type        = string
+  default     = "1.32.1"
+}
+
+variable "nameservers" {
+  description = "DNS nameservers for Talos nodes"
+  type        = list(string)
+  default     = ["8.8.8.8", "1.1.1.1"]
+}
+
 variable "cluster_name" {
   description = "Name of the Kubernetes cluster"
   type        = string
@@ -15,12 +33,17 @@ variable "proxmox_node" {
 }
 
 variable "talos_image_url" {
-  description = "URL to download Talos Linux image from"
+  description = "URL to download Talos Linux image from (must use .raw.zst format)"
   type        = string
 
   validation {
     condition     = can(regex("^https?://", var.talos_image_url))
     error_message = "Talos image URL must be a valid HTTP(S) URL."
+  }
+
+  validation {
+    condition     = !can(regex("\\.raw\\.xz$", var.talos_image_url))
+    error_message = "Use .raw.zst instead of .raw.xz — the bpg/proxmox provider does not support xz decompression. Change the URL suffix from .raw.xz to .raw.zst."
   }
 }
 
@@ -153,7 +176,7 @@ variable "longhorn_mount_path" {
 
 # Health check
 variable "skip_health_check" {
-  description = "Skip cluster health check (useful during destroy)"
+  description = "Skip cluster health check (nodes stay NotReady until CNI is installed separately via Helm)"
   type        = bool
-  default     = false
+  default     = true
 }
