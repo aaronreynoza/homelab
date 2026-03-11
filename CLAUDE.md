@@ -79,14 +79,15 @@ Environments are **fully isolated** - no inter-VLAN communication.
 - Control D profiles configured, "Aaron-Homelab" endpoint provisioned ✅
 
 **Next Tasks** (in order):
-1. Deploy TrueNAS VM on PROD VLAN (see `docs/decisions/002-truenas-storage.md`)
-2. Deploy Talos cluster on PROD VLAN with Newt extension (10.10.10.0/16)
-3. Validate Pangolin connectivity (Newt → VPS WireGuard tunnel)
-4. Install ctrld on OPNsense + configure split-horizon DNS (after cluster testing)
-5. Deploy first Pangolin resource to validate full traffic path
-6. Phase 2.6: Ops maturity (pre-commit hooks, SOPs, checklists)
+1. Generate Talos Factory schematic with Newt extension (manual: factory.talos.dev)
+2. Fill Newt credentials in terraform.tfvars (from Pangolin dashboard)
+3. Merge `refactor/modular-structure` to `main`
+4. `terraform apply` — deploys full platform stack + nginx-test app
+5. Create Pangolin resource for test app (manual: Pangolin dashboard)
+6. Verify public access to test app
+7. Deploy race telemetry app via ArgoCD
 
-See [docs/roadmap.md](docs/roadmap.md) for full implementation plan.
+See [docs/issues/backlog.md](docs/issues/backlog.md) for deferred work.
 
 ---
 
