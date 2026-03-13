@@ -26,7 +26,7 @@ spec:
               Enabled: false
             Database:
               Postgres:
-                Host: zitadel-postgresql
+                Host: cnpg-cluster-zitadel-rw
                 Port: 5432
                 Database: zitadel
                 User:
@@ -37,6 +37,17 @@ spec:
                   Username: postgres
                   SSL:
                     Mode: disable
+        env:
+          - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: cnpg-cluster-zitadel-app
+                key: password
+          - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: cnpg-cluster-zitadel-superuser
+                key: password
         service:
           type: LoadBalancer
           port: 8080
@@ -60,6 +71,12 @@ spec:
     server: https://kubernetes.default.svc
     namespace: zitadel
   syncPolicy:
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m
     automated:
       prune: true
       selfHeal: true

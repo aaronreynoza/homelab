@@ -19,6 +19,10 @@ spec:
         # --- Prometheus ---
         prometheus:
           prometheusSpec:
+            podMonitorSelectorNilUsesHelmValues: false
+            podMonitorNamespaceSelector: {}
+            serviceMonitorSelectorNilUsesHelmValues: false
+            serviceMonitorNamespaceSelector: {}
             retention: 15d
             retentionSize: "10GB"
             storageSpec:
