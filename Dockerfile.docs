@@ -1,0 +1,13 @@
+# Build stage
+FROM python:3.12-slim AS builder
+RUN pip install --no-cache-dir mkdocs-material
+WORKDIR /build
+COPY mkdocs.yml .
+COPY docs/ docs/
+RUN mkdocs build
+
+# Serve stage
+FROM caddy:2-alpine
+COPY --from=builder /build/site /srv
+COPY Caddyfile /etc/caddy/Caddyfile
+EXPOSE 80
