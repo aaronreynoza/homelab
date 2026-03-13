@@ -1,0 +1,6 @@
+# VLAN 10 tagged interface for K8s/PROD network access
+# Primary interface (management network) is configured by cloud-init
+auto {{ primary_nic }}.{{ vlan_id }}
+iface {{ primary_nic }}.{{ vlan_id }} inet static
+    address {{ vlan10_ip }}/16
+    vlan-raw-device {{ primary_nic }}

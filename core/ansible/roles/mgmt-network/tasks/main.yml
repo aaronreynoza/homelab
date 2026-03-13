@@ -1,0 +1,24 @@
+---
+- name: Load 8021q kernel module
+  community.general.modprobe:
+    name: 8021q
+    state: present
+
+- name: Persist 8021q module on boot
+  ansible.builtin.lineinfile:
+    path: /etc/modules-load.d/8021q.conf
+    line: 8021q
+    create: true
+    mode: "0644"
+
+- name: Configure VLAN 10 interface
+  ansible.builtin.template:
+    src: interfaces.j2
+    dest: /etc/network/interfaces.d/vlan10
+    mode: "0644"
+  register: vlan_config
+
+- name: Bring up VLAN interface
+  ansible.builtin.command: ifup {{ primary_nic }}.{{ vlan_id }}
+  when: vlan_config.changed
+  changed_when: true
