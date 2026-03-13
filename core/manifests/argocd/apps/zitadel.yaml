@@ -37,27 +37,6 @@ spec:
                   Username: postgres
                   SSL:
                     Mode: disable
-        postgresql:
-          enabled: true
-          auth:
-            username: zitadel
-            database: zitadel
-            existingSecret: zitadel-credentials
-            secretKeys:
-              userPasswordKey: postgresql-password
-              adminPasswordKey: postgres-password
-          primary:
-            persistence:
-              enabled: true
-              storageClass: longhorn
-              size: 5Gi
-            resources:
-              requests:
-                cpu: 100m
-                memory: 256Mi
-              limits:
-                cpu: 500m
-                memory: 512Mi
         service:
           type: LoadBalancer
           port: 8080
