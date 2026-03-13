@@ -1,0 +1,67 @@
+---
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: "{{ hostname }}"
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Upgrade all packages
+  ansible.builtin.apt:
+    upgrade: dist
+
+- name: Install core packages
+  ansible.builtin.apt:
+    name:
+      - git
+      - tmux
+      - curl
+      - wget
+      - jq
+      - unzip
+      - dnsutils
+      - traceroute
+      - htop
+      - unattended-upgrades
+      - apt-transport-https
+      - ca-certificates
+      - gnupg
+      - python3-pip
+      - python3-venv
+      - ifupdown
+      - vlan
+      - sudo
+    state: present
+
+- name: Ensure operator has passwordless sudo
+  ansible.builtin.copy:
+    content: "operator ALL=(ALL) NOPASSWD: ALL\n"
+    dest: /etc/sudoers.d/operator
+    mode: "0440"
+    validate: visudo -cf %s
+
+- name: Set timezone
+  community.general.timezone:
+    name: UTC
+
+- name: Enable unattended-upgrades
+  ansible.builtin.debconf:
+    name: unattended-upgrades
+    question: unattended-upgrades/enable_auto_updates
+    value: "true"
+    vtype: boolean
+
+- name: Create directories for credentials
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: operator
+    group: operator
+    mode: "0700"
+  loop:
+    - /home/operator/.config/sops/age
+    - /home/operator/.aws
+    - /home/operator/.kube
+    - /home/operator/.talos
