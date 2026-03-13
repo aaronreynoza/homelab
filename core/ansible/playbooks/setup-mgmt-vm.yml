@@ -1,0 +1,16 @@
+---
+- name: Set up management VM
+  hosts: mgmt
+  become: true
+
+  roles:
+    - role: mgmt-base
+      tags: [base]
+    - role: mgmt-network
+      tags: [network]
+    - role: mgmt-security
+      tags: [security]
+    - role: mgmt-tools
+      tags: [tools]
+    - role: mgmt-runner
+      tags: [runner]
