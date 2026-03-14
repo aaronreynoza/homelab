@@ -69,7 +69,7 @@ spec:
             oidc.config: |
               name: Zitadel
               issuer: http://zitadel.internal:8080
-              clientID: "REDACTED_CLIENT_ID"
+              clientID: $argocd-oidc-secrets:client-id
               requestedScopes:
                 - openid
                 - profile
