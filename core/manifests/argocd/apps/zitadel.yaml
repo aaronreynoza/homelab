@@ -21,7 +21,7 @@ spec:
           configmapConfig:
             ExternalSecure: false
             ExternalDomain: zitadel.internal
-            ExternalPort: 8080
+            ExternalPort: 80
             TLS:
               Enabled: false
             Database:
@@ -50,7 +50,7 @@ spec:
                 key: password
         service:
           type: LoadBalancer
-          port: 8080
+          port: 80
           protocol: http2
           annotations: {}
         ingress:
