@@ -69,7 +69,7 @@ spec:
             oidc.config: |
               name: Zitadel
               issuer: http://zitadel.internal:8080
-              clientID: "363992757187969576"
+              clientID: "364000638838833752"
               requestedScopes:
                 - openid
                 - profile
