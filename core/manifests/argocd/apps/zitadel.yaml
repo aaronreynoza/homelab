@@ -37,6 +37,12 @@ spec:
                   Username: postgres
                   SSL:
                     Mode: disable
+            DefaultInstance:
+              Features:
+                LoginV2:
+                  Required: false
+        login:
+          enabled: false
         env:
           - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
             valueFrom:

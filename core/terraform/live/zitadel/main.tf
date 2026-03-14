@@ -23,6 +23,10 @@ resource "zitadel_project" "homelab" {
   project_role_check       = true
   has_project_check        = true
   private_labeling_setting = "PRIVATE_LABELING_SETTING_UNSPECIFIED"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # =============================================================================
@@ -41,6 +45,10 @@ resource "zitadel_application_oidc" "argocd" {
   auth_method_type     = "OIDC_AUTH_METHOD_TYPE_NONE"  # PKCE
   post_logout_redirect_uris = [var.argocd_url]
   dev_mode             = true  # Allow HTTP redirect URIs
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "kubernetes_secret_v1" "argocd_oidc" {
@@ -66,6 +74,10 @@ resource "zitadel_application_oidc" "forgejo" {
   auth_method_type     = "OIDC_AUTH_METHOD_TYPE_POST"
   post_logout_redirect_uris = [var.forgejo_url]
   dev_mode             = true
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "kubernetes_secret_v1" "forgejo_oidc" {
@@ -92,6 +104,10 @@ resource "zitadel_application_oidc" "harbor" {
   auth_method_type     = "OIDC_AUTH_METHOD_TYPE_POST"
   post_logout_redirect_uris = [var.harbor_url]
   dev_mode             = true
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "kubernetes_secret_v1" "harbor_oidc" {
@@ -118,6 +134,10 @@ resource "zitadel_application_oidc" "grafana" {
   auth_method_type     = "OIDC_AUTH_METHOD_TYPE_BASIC"
   post_logout_redirect_uris = [var.grafana_url]
   dev_mode             = true
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "kubernetes_secret_v1" "grafana_oidc" {
