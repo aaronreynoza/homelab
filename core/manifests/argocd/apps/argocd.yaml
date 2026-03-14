@@ -68,7 +68,7 @@ spec:
             url: "http://REDACTED_LB_IP"
             oidc.config: |
               name: Zitadel
-              issuer: http://zitadel.internal
+              issuer: http://zitadel.internal:8080
               clientID: $argocd-oidc-secrets:client-id
               requestedScopes:
                 - openid
