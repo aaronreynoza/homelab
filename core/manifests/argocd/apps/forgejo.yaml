@@ -44,8 +44,8 @@ spec:
 
           config:
             server:
-              DOMAIN: localhost
-              ROOT_URL: http://localhost:3000
+              DOMAIN: 10.10.10.222
+              ROOT_URL: http://10.10.10.222:3000
               SSH_DOMAIN: ""
               DISABLE_SSH: true
 
