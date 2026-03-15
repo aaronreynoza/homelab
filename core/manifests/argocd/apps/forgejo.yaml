@@ -60,7 +60,7 @@ spec:
               DISABLE_REGISTRATION: true
 
             oauth2:
-              ENABLED: false
+              ENABLED: true
 
             actions:
               ENABLED: true

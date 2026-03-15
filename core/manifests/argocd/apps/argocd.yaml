@@ -8,6 +8,14 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
+  ignoreDifferences:
+    - group: ""
+      kind: ConfigMap
+      name: argocd-cm
+      namespace: argocd
+      jqPathExpressions:
+        - '.data["url"]'
+        - '.data["oidc.config"]'
   project: default
   source:
     repoURL: https://argoproj.github.io/argo-helm
@@ -15,11 +23,6 @@ spec:
     targetRevision: 7.7.10
     helm:
       values: |
-        global:
-          hostAliases:
-            - ip: "REDACTED_LB_IP"
-              hostnames:
-                - "zitadel.internal"
         server:
           extraArgs:
             - --insecure
@@ -65,16 +68,6 @@ spec:
           enabled: false
         configs:
           cm:
-            url: "http://REDACTED_LB_IP"
-            oidc.config: |
-              name: Zitadel
-              issuer: http://zitadel.internal:8080
-              clientID: "REDACTED_CLIENT_ID"
-              requestedScopes:
-                - openid
-                - profile
-                - email
-                - urn:zitadel:iam:org:project:roles
             resource.customizations.health.postgresql.cnpg.io_Cluster: |
               hs = {}
               if obj.status ~= nil then
