@@ -20,7 +20,7 @@ spec:
           masterkeySecretName: zitadel-credentials
           configmapConfig:
             ExternalSecure: false
-            ExternalDomain: zitadel.internal
+            ExternalDomain: "10.10.10.225"
             ExternalPort: 8080
             TLS:
               Enabled: false
