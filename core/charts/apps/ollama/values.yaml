@@ -1,0 +1,60 @@
+# Ollama Helm Values — Generic Configuration
+# LLM inference server
+# Chart: ollama-helm/ollama (https://otwld.github.io/ollama-helm/)
+# Docs: https://github.com/ollama/ollama
+#
+# Environment-specific overrides (GPU, nodeSelector, runtimeClassName)
+# live in prod/values/ollama/
+
+# Pin image version
+image:
+  repository: ollama/ollama
+  tag: "0.18.0"
+
+# Service — ClusterIP for internal access
+service:
+  type: ClusterIP
+  port: 11434
+
+# Persistence — Longhorn SSD for model storage
+persistentVolume:
+  enabled: true
+  storageClass: longhorn
+  size: 50Gi
+  accessModes:
+    - ReadWriteOnce
+
+# Resource requests/limits (CPU/memory only, GPU is env-specific)
+resources:
+  requests:
+    cpu: "2"
+    memory: 8Gi
+  limits:
+    cpu: "4"
+    memory: 16Gi
+
+# Probes — give models time to load
+livenessProbe:
+  enabled: true
+  path: /
+  initialDelaySeconds: 120
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+
+readinessProbe:
+  enabled: true
+  path: /
+  initialDelaySeconds: 30
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 6
+  successThreshold: 1
+
+# Recreate strategy — only one instance should access models at a time
+updateStrategy:
+  type: Recreate
+
+# Graceful shutdown
+terminationGracePeriodSeconds: 120
