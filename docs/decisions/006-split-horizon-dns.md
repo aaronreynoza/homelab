@@ -134,6 +134,22 @@ Workstation DNS query: zitadel.aaron.reynoza.org?
 | `zitadel.aaron.reynoza.org` | 10.10.10.225 | Zitadel |
 | `chat.aaron.reynoza.org` | 10.10.10.227 | Open WebUI |
 
+## External Access (Outside the Network)
+
+Split-horizon only affects internal DNS resolution. **External access works without it.**
+
+When you're outside (e.g., at a park), all traffic goes through Pangolin via HTTPS — including OAuth/OIDC login flows. This works because OIDC is pure HTTPS (redirects + API calls), which Pangolin proxies fine.
+
+| Protocol | Used By | Through Pangolin? |
+|----------|---------|-------------------|
+| **HTTPS** | Browser login, OIDC flows, all user interaction | Yes — works externally and internally |
+| **gRPC** | Terraform Zitadel provider only (admin tooling) | No — requires direct connection (split-horizon or VPN) |
+
+gRPC is an implementation detail of the Terraform provider. Users never encounter it. The split-horizon fix is about:
+1. **Performance** — internal traffic stays local (no VPS round-trip)
+2. **Terraform** — gRPC needs direct connection to Zitadel
+3. **Resilience** — internal operations don't depend on VPS availability
+
 ## TLS Consideration
 
 With split-horizon, internal traffic reaches services via plain HTTP (LB IPs don't have TLS certs). This is acceptable:
