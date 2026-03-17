@@ -6,7 +6,7 @@ metadata:
 spec:
   secretName: wildcard-aaron-reynoza-org-tls
   issuerRef:
-    name: letsencrypt-staging
+    name: letsencrypt-production
     kind: ClusterIssuer
   dnsNames:
     - "aaron.reynoza.org"
