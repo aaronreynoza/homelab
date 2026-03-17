@@ -55,11 +55,22 @@ nav:
       - SOPS Secrets: decisions/004-sops-secrets-management.md
   - Runbooks:
       - Initial Setup: runbooks/initial-setup.md
+      - Management VM: runbooks/mgmt-vm-setup.md
       - Terraform Backend: runbooks/terraform-backend-setup.md
       - Proxmox Recovery: runbooks/proxmox-recovery.md
+      - OPNSense Recovery: runbooks/opnsense-recovery-2026-02-11.md
       - VLAN Fix: runbooks/vlan-opnsense-fix.md
       - VLAN Routing: runbooks/mgmt-to-vlan-routing.md
       - Cluster Deployment: runbooks/prod-cluster-deployment.md
-      - OPNSense Recovery: runbooks/opnsense-recovery-2026-02-11.md
+  - Issues:
+      - Overview: issues/README.md
+      - Backlog: issues/backlog.md
+      - OPNSense HA: issues/001-opnsense-ha-carp-failover.md
+      - TrueNAS Replication: issues/002-truenas-zfs-replication.md
+      - Longhorn Replicas: issues/003-longhorn-cross-node-replicas.md
+      - Longhorn Backup: issues/004-longhorn-backup-to-truenas.md
+      - Velero Backup: issues/005-velero-cluster-backup.md
+      - Security Hardening: issues/006-security-hardening-ddos-protection.md
+      - Multi-Router VLAN: issues/007-multi-router-vlan-access.md
   - Roadmap: roadmap.md
   - Changelog: CHANGELOG.md

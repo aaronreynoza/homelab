@@ -21,6 +21,11 @@ spec:
           image: registry.example.com/platform/docs:v1.0.0
           ports:
             - containerPort: 80
+          volumeMounts:
+            - name: caddyfile
+              mountPath: /etc/caddy/Caddyfile
+              subPath: Caddyfile
+              readOnly: true
           resources:
             requests:
               cpu: 50m
@@ -40,3 +45,7 @@ spec:
               port: 80
             initialDelaySeconds: 3
             periodSeconds: 10
+      volumes:
+        - name: caddyfile
+          configMap:
+            name: docs-site-caddyfile

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: docs-site-caddyfile
+  namespace: docs
+  labels:
+    app: docs-site
+data:
+  Caddyfile: |
+    :80 {
+        root * /srv
+        file_server
+        encode gzip
+        try_files {path} {path}/ /index.html
+        header {
+            X-Content-Type-Options nosniff
+            X-Frame-Options DENY
+            Referrer-Policy strict-origin-when-cross-origin
+        }
+    }
