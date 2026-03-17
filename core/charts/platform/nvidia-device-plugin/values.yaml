@@ -1,6 +1,10 @@
 # NVIDIA Device Plugin for GPU workloads
 # Chart: https://nvidia.github.io/k8s-device-plugin (v0.18.2)
 # Docs: https://github.com/NVIDIA/k8s-device-plugin
+# Talos: https://docs.siderolabs.com/talos/v1.12/configure-your-talos-cluster/hardware-and-drivers/nvidia-gpu
+
+# Required for Talos Linux — the nvidia RuntimeClass must exist in the cluster
+runtimeClassName: nvidia
 
 # Time-slicing: allows multiple pods to share the GPU
 config:

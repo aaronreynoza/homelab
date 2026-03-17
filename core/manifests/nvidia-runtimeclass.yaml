@@ -1,0 +1,8 @@
+# RuntimeClass for NVIDIA GPU workloads on Talos Linux
+# Required by the NVIDIA device plugin and any pod using GPU resources
+# Reference: https://docs.siderolabs.com/talos/v1.12/configure-your-talos-cluster/hardware-and-drivers/nvidia-gpu
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: nvidia
+handler: nvidia
