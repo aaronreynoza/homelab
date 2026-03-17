@@ -17,7 +17,8 @@ spec:
     spec:
       containers:
         - name: caddy
-          image: REDACTED_LB_IP/platform/docs:v1.0.0
+          # Override image in prod ArgoCD Application manifest
+          image: registry.example.com/platform/docs:v1.0.0
           ports:
             - containerPort: 80
           resources:

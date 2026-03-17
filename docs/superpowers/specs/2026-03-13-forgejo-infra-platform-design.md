@@ -116,7 +116,7 @@ Create `core/ansible/playbooks/setup-mgmt-vm.yml` for reproducible setup. This i
 repoURL: https://github.com/aaronreynoza/homelab.git
 
 # After
-repoURL: http://REDACTED_LB_IP:3000/aaron/homelab.git
+repoURL: http://REDACTED_LB_IP:3000/aaron/infra-core.git
 ```
 
 Note: Using IP address because internal DNS (ctrld) is not configured yet. Will change to `forgejo.internal` when DNS is set up.

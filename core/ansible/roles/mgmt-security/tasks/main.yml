@@ -29,7 +29,7 @@
     rule: allow
     port: "22"
     proto: tcp
-    src: 192.168.1.0/24
+    src: "{{ mgmt_network_cidr }}"
 
 - name: Enable UFW
   community.general.ufw:

@@ -169,7 +169,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: http://10.10.10.222:3000/aaron/homelab.git
+    repoURL: http://10.10.10.222:3000/aaron/infra-core.git
     targetRevision: main
     path: core/manifests/apps/forgejo-runner
   destination:
