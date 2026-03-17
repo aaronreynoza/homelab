@@ -32,11 +32,11 @@ migrationJob:
 # Resources
 resources:
   requests:
-    cpu: 100m
-    memory: 256Mi
+    cpu: 200m
+    memory: 512Mi
   limits:
     cpu: "1"
-    memory: 512Mi
+    memory: 1Gi
 
 # Model routing config — API keys injected via env vars in prod override
 proxy_config:
