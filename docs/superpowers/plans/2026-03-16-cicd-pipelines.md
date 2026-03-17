@@ -32,7 +32,7 @@
 - [ ] **Step 1: Get instance-level registration token from Forgejo API**
 
 ```bash
-curl -s -H "Authorization: token ee76c676570056b612525cda05e0bb0e43afb2ac" \
+curl -s -H "Authorization: token <FORGEJO_ADMIN_TOKEN>" \
   http://10.10.10.222:3000/api/v1/admin/runners/registration-token \
   -X POST
 ```
@@ -61,7 +61,7 @@ Expected: Active (running).
 - [ ] **Step 4: Verify runner is online**
 
 ```bash
-curl -s -H "Authorization: token ee76c676570056b612525cda05e0bb0e43afb2ac" \
+curl -s -H "Authorization: token <FORGEJO_ADMIN_TOKEN>" \
   http://10.10.10.222:3000/api/v1/admin/runners | python3 -c "import sys,json; [print(r['name'], r['status']) for r in json.load(sys.stdin)]"
 ```
 
@@ -76,7 +76,7 @@ Expected: `mgmt-infra-runner` with status `online`.
 - [ ] **Step 1: Get a second registration token**
 
 ```bash
-curl -s -H "Authorization: token ee76c676570056b612525cda05e0bb0e43afb2ac" \
+curl -s -H "Authorization: token <FORGEJO_ADMIN_TOKEN>" \
   http://10.10.10.222:3000/api/v1/admin/runners/registration-token \
   -X POST
 ```
@@ -206,7 +206,7 @@ git push origin main
 kubectl get pods -n forgejo-runner
 # Expected: forgejo-runner pod Running
 
-curl -s -H "Authorization: token ee76c676570056b612525cda05e0bb0e43afb2ac" \
+curl -s -H "Authorization: token <FORGEJO_ADMIN_TOKEN>" \
   http://10.10.10.222:3000/api/v1/admin/runners | python3 -c "import sys,json; [print(r['name'], r['status']) for r in json.load(sys.stdin)]"
 # Expected: both mgmt-infra-runner and k8s-runner online
 ```
