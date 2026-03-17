@@ -51,6 +51,10 @@ l2announcements:
 externalIPs:
   enabled: true
 
+# Gateway API — single ingress gateway replaces per-service LoadBalancer IPs
+gatewayAPI:
+  enabled: true
+
 # Single-node operator (resource constrained)
 operator:
   replicas: 1
