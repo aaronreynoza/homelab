@@ -1,0 +1,23 @@
+# NVIDIA Device Plugin for GPU workloads
+# Chart: https://nvidia.github.io/k8s-device-plugin (v0.18.2)
+# Docs: https://github.com/NVIDIA/k8s-device-plugin
+
+# Time-slicing: allows multiple pods to share the GPU
+config:
+  map:
+    default: |-
+      version: v1
+      sharing:
+        timeSlicing:
+          resources:
+            - name: nvidia.com/gpu
+              replicas: 2
+
+# Only deploy on GPU-labeled nodes
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: homelab.aaron.reynoza.org/gpu
+              operator: Exists
