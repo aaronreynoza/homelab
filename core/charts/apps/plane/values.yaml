@@ -47,6 +47,7 @@ minio:
   storageClass: longhorn
   volumeSize: 10Gi
   pullPolicy: IfNotPresent
+  assign_cluster_ip: true
   root_user: admin
   root_password: password
   env:
@@ -57,6 +58,7 @@ web:
   replicas: 1
   image: artifacts.plane.so/makeplane/plane-frontend
   pullPolicy: IfNotPresent
+  assign_cluster_ip: true
   memoryRequest: 50Mi
   memoryLimit: 512Mi
   cpuRequest: 50m
@@ -67,6 +69,7 @@ space:
   replicas: 1
   image: artifacts.plane.so/makeplane/plane-space
   pullPolicy: IfNotPresent
+  assign_cluster_ip: true
   memoryRequest: 50Mi
   memoryLimit: 512Mi
   cpuRequest: 50m
@@ -77,6 +80,7 @@ admin:
   replicas: 1
   image: artifacts.plane.so/makeplane/plane-admin
   pullPolicy: IfNotPresent
+  assign_cluster_ip: true
   memoryRequest: 50Mi
   memoryLimit: 512Mi
   cpuRequest: 50m
@@ -87,6 +91,7 @@ live:
   replicas: 1
   image: artifacts.plane.so/makeplane/plane-live
   pullPolicy: IfNotPresent
+  assign_cluster_ip: true
   memoryRequest: 50Mi
   memoryLimit: 512Mi
   cpuRequest: 50m
@@ -97,6 +102,7 @@ api:
   replicas: 1
   image: artifacts.plane.so/makeplane/plane-backend
   pullPolicy: IfNotPresent
+  assign_cluster_ip: true
   memoryRequest: 50Mi
   memoryLimit: 1000Mi
   cpuRequest: 50m
