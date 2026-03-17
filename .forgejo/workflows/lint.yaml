@@ -1,0 +1,38 @@
+name: Lint & Validate
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  terraform-validate:
+    runs-on: k8s
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Terraform configs
+        run: |
+          for dir in $(find core/terraform -name '*.tf' -exec dirname {} \; | sort -u); do
+            echo "==> Validating $dir"
+            cd "$dir"
+            terraform init -backend=false 2>/dev/null
+            terraform validate
+            cd "$GITHUB_WORKSPACE"
+          done
+
+  yaml-lint:
+    runs-on: k8s
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install yamllint
+        run: pip3 install yamllint 2>/dev/null || apk add --no-cache py3-pip && pip3 install yamllint
+      - name: Lint YAML
+        run: yamllint -d relaxed core/manifests/ core/ansible/
+
+  shellcheck:
+    runs-on: k8s
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: apt-get update && apt-get install -y shellcheck 2>/dev/null || apk add --no-cache shellcheck
+      - name: Check scripts
+        run: find core/scripts -name '*.sh' -exec shellcheck {} +
