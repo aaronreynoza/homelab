@@ -43,11 +43,11 @@ proxy_config:
   model_list:
     - model_name: fast
       litellm_params:
-        model: ollama/llama3.1:8b-q4_0
+        model: ollama/llama3.1:8b
         api_base: http://ollama.ai.svc.cluster.local:11434
     - model_name: code
       litellm_params:
-        model: ollama/qwen2.5-coder:14b-q4_0
+        model: ollama/qwen2.5-coder:14b
         api_base: http://ollama.ai.svc.cluster.local:11434
     - model_name: smart
       litellm_params:
