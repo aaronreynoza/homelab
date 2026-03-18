@@ -90,7 +90,7 @@ app-template:
           probes:
             liveness:
               enabled: true
-              custom: true
+              type: Custom
               spec:
                 exec:
                   command:
@@ -103,7 +103,7 @@ app-template:
                 failureThreshold: 3
             readiness:
               enabled: true
-              custom: true
+              type: Custom
               spec:
                 exec:
                   command:
@@ -116,7 +116,7 @@ app-template:
                 failureThreshold: 3
             startup:
               enabled: true
-              custom: true
+              type: Custom
               spec:
                 exec:
                   command:
@@ -128,35 +128,10 @@ app-template:
                 timeoutSeconds: 5
                 failureThreshold: 30
 
+        # chromium sidecar disabled — not needed for messaging agent
+        # Re-enable when browser automation is required
         chromium:
-          enabled: true
-          image:
-            repository: chromedp/headless-shell
-            tag: "{{ .Values.chromiumVersion }}"
-          env:
-            XDG_CACHE_HOME: /tmp
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            runAsNonRoot: true
-            readOnlyRootFilesystem: true
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: "1"
-              memory: 1Gi
-          probes:
-            liveness:
-              enabled: false
-            readiness:
-              enabled: false
-            startup:
-              enabled: false
+          enabled: false
 
   # ConfigMap — gateway config and shell aliases
   configMaps:
