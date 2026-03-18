@@ -26,10 +26,11 @@ locals {
 # Requires split-horizon DNS (OPNSense or /etc/hosts).
 provider "zitadel" {
   domain           = "zitadel.${var.base_domain}"
-  port             = "443"
-  insecure         = false
+  port             = "8080"
+  insecure         = true
   jwt_profile_file = var.zitadel_key_file
 }
+# TODO: Switch to port 443 + insecure=false after cert-manager deploys TLS on gateway
 
 # --- Kubernetes provider ---
 provider "kubernetes" {
@@ -552,17 +553,17 @@ resource "zitadel_default_login_policy" "default" {
   user_login                    = true
   allow_register                = false
   allow_external_idp            = true
-  force_mfa                     = false
+  force_mfa                     = true
   force_mfa_local_only          = false
   passwordless_type             = "PASSWORDLESS_TYPE_NOT_ALLOWED"
   hide_password_reset           = false
   ignore_unknown_usernames      = false
   default_redirect_uri          = "${local.zitadel_url}/ui/console"
   multi_factors                 = []
-  second_factors                = []
+  second_factors                = ["SECOND_FACTOR_TYPE_OTP"]
   password_check_lifetime       = "240h"
   external_login_check_lifetime = "12h"
-  mfa_init_skip_lifetime        = "720h"
+  mfa_init_skip_lifetime        = "0s"
   second_factor_check_lifetime  = "12h"
   multi_factor_check_lifetime   = "12h"
 }
