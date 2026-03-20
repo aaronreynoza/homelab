@@ -26,11 +26,10 @@ Tasks identified during cluster setup that are not needed for the initial deploy
 - **Decision:** TrueNAS not worth it for 2 disks. Storage: ZFS on Proxmox + Longhorn + NFS from Proxmox.
 - See "Won't Do" section below.
 
-### ctrld on OPNSense for DNS management
-- **Decision doc:** `docs/decisions/003-pangolin-controld-architecture.md`
-- **Why:** Split-horizon DNS, per-VLAN filtering, encrypted DoH3
-- **Why deferred:** DNS works fine with 8.8.8.8 for now. No internal DNS needed yet.
-- **Steps:** Install ctrld, configure per-VLAN policies, replace Unbound
+### ~~ctrld on OPNSense for DNS management~~ → SUPERSEDED
+- **Resolved:** Split-horizon DNS implemented via OPNSense Unbound wildcard override + CoreDNS custom zone (2026-03-17). ctrld approach was bypassed — native DNS works better for our setup.
+- Internal: `*.aaron.reynoza.org` → 10.10.10.228 (Cilium Gateway)
+- External: `*.aaron.reynoza.org` → Pangolin VPS (Cloudflare DNS)
 
 ### OPNSense API automation
 - **Why:** Firewall rules are currently manual via Web UI
@@ -59,15 +58,14 @@ Tasks identified during cluster setup that are not needed for the initial deploy
 - **Steps:** New `environments/dev/` directory, different IPs, same modules
 - **Network:** 10.11.10.0/16, VLAN 11, gateway 10.11.10.1
 
-### Harbor container registry per environment
-- **Why:** Private image registry, vulnerability scanning
-- **Why deferred:** Public images work fine for initial apps
+### ~~Harbor container registry per environment~~ → DEPLOYED
+- **Resolved:** Harbor deployed via ArgoCD (2026-03-12). Pull-through cache configured for GHCR, Docker Hub, k8s.io (2026-03-19). Talos containerd mirrors route through Harbor.
 
 ## Priority 4: Applications
 
-### Race telemetry app
+### Race telemetry app (ApexDirector)
 - **Why:** Production workload with paying clients
-- **Blocks:** Full traffic path validated (nginx-test)
+- **Status:** Traffic path fully validated via Pangolin + Cilium Gateway
 - **Steps:** ArgoCD Application manifest, Pangolin resource, domain config
 
 ### Media services (Jellyfin, etc.)
@@ -88,4 +86,13 @@ Tasks identified during cluster setup that are not needed for the initial deploy
 
 ---
 
-**Last Updated:** 2026-03-17
+### MkDocs documentation site → CANCELLED
+- **Replaced by:** Outline wiki (HOMELAB-72). MkDocs tickets cancelled (HOMELAB-17, 46, 47).
+
+### Coder workspace platform → REPLACED
+- **Replaced by:** code-server + Claude Code Remote Control on Management VM 110 (2026-03-19)
+- **Cleanup:** HOMELAB-68 (remove Coder) is in Todo state
+
+---
+
+**Last Updated:** 2026-03-19

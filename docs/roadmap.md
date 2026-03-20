@@ -2,8 +2,8 @@
 
 This document tracks the implementation phases for the homelab project.
 
-**Current Phase**: MkDocs Docs Site (next publicly exposed app)
-**Last Updated**: 2026-03-17
+**Current Phase**: Agent Pipeline & Docs Platform
+**Last Updated**: 2026-03-19
 
 ---
 
@@ -21,7 +21,8 @@ This document tracks the implementation phases for the homelab project.
 | 5 | Backup & Disaster Recovery | ✅ Velero Deployed |
 | 6 | Observability | ✅ Complete |
 | 7 | Applications | ⏳ Pending (racing app deferred) |
-| 8 | Future (GPU-dependent) | ⏳ Pending |
+| 8 | LLM / GPU Stack | ✅ Complete |
+| 9 | Agent Workspace | ✅ Complete |
 
 ---
 
@@ -119,11 +120,11 @@ This document tracks the implementation phases for the homelab project.
 - [x] Provision "Aaron-Homelab" endpoint in Control D
 - [x] Create homelab site in Pangolin dashboard
 - [ ] Install ctrld on OPNsense — replace Unbound, configure per-VLAN DNS policies (after Phase 3 cluster testing)
-- [ ] Configure split-horizon DNS — internal domains resolve locally via ctrld rules (after ctrld)
+- [x] Configure split-horizon DNS — OPNSense wildcard + CoreDNS rewrite; internal subdomains resolve internally
 
 **Decision**: See `docs/decisions/003-pangolin-controld-architecture.md`
 
-**Note**: ctrld installation on OPNsense is deferred until after Talos cluster deployment is validated (Phase 3).
+**Note**: Split-horizon DNS implemented via OPNSense wildcard DNS entry + CoreDNS rewrite rules. ctrld integration remains optional.
 
 ---
 
@@ -172,7 +173,7 @@ This document tracks the implementation phases for the homelab project.
 
 ### 3.4 Validate Pangolin Connectivity
 - [x] Newt connects to Pangolin VPS via WireGuard
-- [ ] Install ctrld on OPNsense and configure split-horizon DNS (see Phase 2.4)
+- [x] Configure split-horizon DNS (OPNSense wildcard + CoreDNS rewrite — see Phase 2.4)
 
 ---
 
@@ -190,6 +191,7 @@ This document tracks the implementation phases for the homelab project.
 - [x] Deploy Harbor on prod cluster
 - [x] Configure storage (Longhorn PVC)
 - [x] Set up vulnerability scanning
+- [x] Configure pull-through proxy caches (GHCR, Docker Hub, Kubernetes registry)
 
 ### 4.3 Secrets Management ✅ (SOPS + age, not ESO)
 - [x] SOPS + age encryption for all secrets
@@ -262,12 +264,44 @@ This document tracks the implementation phases for the homelab project.
 
 ---
 
-## Phase 8: Future / When Ready
+## Phase 8: LLM / GPU Stack ✅ COMPLETE
 
-**Goal**: Deploy services pending hardware
+**Goal**: Deploy LLM inference stack with GPU passthrough
 
-### 8.1 Ollama + Web UI (Requires GPU)
-- [ ] Procure GPU for LLM inference
-- [ ] Deploy Ollama with GPU passthrough
-- [ ] Deploy Open WebUI or similar interface
-- [ ] Configure access from devices
+### 8.1 Ollama + LiteLLM + Open WebUI ✅
+- [x] Configure GPU passthrough (NVIDIA RTX 3060, IOMMU/VFIO)
+- [x] Deploy Ollama with GPU passthrough on K8s
+- [x] Deploy LiteLLM as OpenAI-compatible API gateway
+- [x] Deploy Open WebUI for browser-based chat interface
+- [x] Configure access at `chat.aaron.reynoza.org` via Pangolin
+- [x] Zitadel SSO integration for Open WebUI
+
+---
+
+## Phase 9: Agent Workspace ✅ COMPLETE
+
+**Goal**: Deploy agent pipeline (SP1-SP3) and persistent agent workspace on VM 110
+
+### 9.1 Agent Pipeline (SP1-SP3) ✅
+- [x] SP1: Agent config repo (`~/repos/homelab/agent-config/`)
+- [x] SP2: Skill framework for Claude Code
+- [x] SP3: Orchestration pipeline
+
+### 9.2 Agent Workspace on VM 110 ✅
+- [x] Deploy code-server on VM 110 (accessible at `code.aaron.reynoza.org`)
+- [x] Claude Code Remote Control configured in agent workspace
+- [x] Ansible-managed configuration for VM 110 agent tooling
+
+---
+
+## Phase 10: Docs Platform (In Progress)
+
+**Goal**: Deploy Outline as the internal/public documentation platform
+
+### 10.1 Outline ⏳
+- [ ] Deploy Outline with Helm (replacing MkDocs plan)
+- [ ] Configure CNPG PostgreSQL backend
+- [ ] Configure Zitadel OIDC SSO
+- [ ] Configure S3-compatible storage (Backblaze B2 or Longhorn)
+- [ ] Migrate existing docs content
+- [ ] Expose at `docs.aaron.reynoza.org` via Pangolin

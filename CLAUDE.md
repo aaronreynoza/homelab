@@ -28,7 +28,7 @@ Environments are **fully isolated** - no inter-VLAN communication.
   - VLAN 10 (PROD): 10.10.10.1/16
   - VLAN 11 (DEV): 10.11.10.1/16
 - **K8s**: Talos Linux v1.12.5, 1 CP + 2 workers on VLAN 10
-- **Management VM** (VM 110): Debian 12, dual-homed, Ansible-configured
+- **Management VM** (VM 110): Debian 12, dual-homed, Ansible-configured, agent workspace (code-server + Claude Code Remote Control)
 
 ### Deployed Applications
 - Cilium (CNI + Hubble + LB-IPAM)
@@ -37,6 +37,10 @@ Environments are **fully isolated** - no inter-VLAN communication.
 - Forgejo, Harbor, Zitadel, Velero
 - kube-prometheus-stack, Loki, Tempo, Mimir, OTel Collector, CNPG
 - Zitadel SSO for ArgoCD, Forgejo, Grafana, Harbor
+- Plane (project management, Plane MCP)
+- CNPG (CloudNativePG operator + clusters)
+- Open WebUI + Ollama + LiteLLM (LLM stack)
+- code-server on VM 110 (agent workspace)
 
 ### Git Architecture
 - **Forgejo**: Source of truth (http://10.10.10.222:3000)
@@ -47,6 +51,7 @@ Environments are **fully isolated** - no inter-VLAN communication.
 ### Service URLs (via Pangolin)
 - All services at `*.aaron.reynoza.org` with auto TLS via Pangolin
 - `forgejo.aaron.reynoza.org`, `harbor.aaron.reynoza.org`, `argocd.aaron.reynoza.org`, `grafana.aaron.reynoza.org`, `zitadel.aaron.reynoza.org`
+- `plane.aaron.reynoza.org`, `code.aaron.reynoza.org`, `chat.aaron.reynoza.org`
 - Pangolin resources managed via `scripts/pangolin/pangolin-resources.py`
 - Newt (K8s pod) maintains WireGuard tunnel to Pangolin VPS
 
@@ -74,16 +79,17 @@ Environments are **fully isolated** - no inter-VLAN communication.
 - **Harbor** per environment (isolated registries)
 - **Pangolin** on Vultr VPS for public access (replaces Cloudflare Tunnel — see ADR-003)
 - **Control D + ctrld** for DNS management with per-VLAN policies (replaces Unbound on OPNsense)
-- **Newt** (Talos system extension) as Pangolin agent inside the cluster
+- **Newt** (K8s pod) as Pangolin agent inside the cluster
 - **Zitadel** for SSO/OAuth (Terraform-driven, zero manual steps)
 - **Velero + Longhorn** for backup/DR to Backblaze B2
 - **Backblaze B2** for off-site backups (not AWS S3)
+- **Docs platform**: Outline (replacing MkDocs plan)
 
 ---
 
 ## Work Status
 
-**Current Phase**: Subdomain Migration Done, LLM Stack Next
+**Current Phase**: Agent Pipeline Complete (SP1-SP3), Docs Platform Next
 **Branch**: `main`
 
 **Completed:**
@@ -97,16 +103,19 @@ Environments are **fully isolated** - no inter-VLAN communication.
 - ~~GitHub push mirrors~~ — Repos renamed, Forgejo push mirrors with sync_on_commit (2026-03-17)
 - ~~Subdomain migration~~ — All services at `*.aaron.reynoza.org` via Pangolin, IaC script (2026-03-17)
 - ~~Docs overhaul~~ — 18 files updated to match current state (2026-03-17)
+- ~~LLM Stack~~ — Ollama + LiteLLM + Open WebUI + GPU passthrough (2026-03-17)
+- ~~Plane deployment~~ — Project management with MCP integration (2026-03-18)
+- ~~Agent Pipeline (SP1-SP3)~~ — Agent config, skill framework, orchestration pipeline (2026-03-19)
+- ~~Agent Workspace~~ — code-server + Claude Code Remote Control on VM 110 (2026-03-19)
+- ~~Harbor pull-through cache~~ — GHCR/Docker/K8s proxy caches (2026-03-19)
 
 **Next Tasks** (in order):
-1. Ollama + Open WebUI + LiteLLM + GPU passthrough
-2. Update Zitadel OIDC redirect URIs for new subdomains (terraform apply)
-3. Configure ControlD split-horizon for internal access
-4. MkDocs docs site (trigger first CI build)
-5. Observability tuning (dashboards, alerts)
-6. Self-hosted media platform (*arr stack + Jellyfin + Navidrome)
-8. Immich (Google Photos replacement)
-9. Paperless-ngx (document OCR/management)
+1. Deploy Outline documentation platform
+2. Remove Coder platform (HOMELAB-68)
+3. Deploy Ntfy push notifications
+4. Configure ControlD split-horizon
+5. Media platform (*arr stack + Jellyfin + Navidrome)
+6. Immich (Google Photos replacement)
 
 See [docs/issues/backlog.md](docs/issues/backlog.md) and [docs/roadmap.md](docs/roadmap.md) for full roadmap. Tickets and documentation live in Plane (workspace: homelab, project: HOMELAB).
 

@@ -3,7 +3,7 @@
 ## Table of Contents
 - [High-Level Network Overview](#high-level-network-overview)
 - [Public Access (Pangolin)](#public-access-pangolin--wireguard)
-- [DNS Architecture (Control D)](#dns-architecture-control-d--ctrld)
+- [DNS Architecture](#dns-architecture)
 - [DDoS / WAF Protection](#ddos--waf-protection-cloudflare-in-front)
 - [Application Architecture](#application-architecture)
 - [Backup & DR](#data-flow-backup--disaster-recovery)
@@ -46,8 +46,9 @@
        │       OPNSense VM          │
        │  Firewall, Router, DHCP    │
        │ ┌────────────────────────┐ │
-       │ │ ctrld (DNS proxy)      │ │
-       │ │ Per-VLAN DNS + DoH3    │ │
+       │ │ Unbound (DNS resolver) │ │
+       │ │ Wildcard override +    │ │
+       │ │ CoreDNS custom zone    │ │
        │ └────────────────────────┘ │
        │                            │
        │  VLAN 10: Prod gateway     │
@@ -111,10 +112,12 @@ Replaces Cloudflare Tunnel. See
   │  Receives WG traffic,      │
   │  proxies to K8s services   │
   │                            │
-  │  Services:                 │
+  │  Services (all via Cilium  │
+  │  Gateway + HTTPRoutes):    │
   │  Forgejo, Harbor,          │
-  │  Jellyfin (planned),       │
-  │  MkDocs (planned)          │
+  │  ArgoCD, Grafana,          │
+  │  Zitadel, Plane,           │
+  │  Open WebUI, code-server   │
   └────────────────────────────┘
 
   [x] No public IP on homelab
@@ -127,12 +130,15 @@ Replaces Cloudflare Tunnel. See
 
 ---
 
-## DNS Architecture (Control D + ctrld)
+## DNS Architecture
 
-ctrld replaces Unbound on OPNsense. Adds per-VLAN
-DNS policies, encrypted queries (DoH3), and analytics.
+DNS is handled by OPNSense Unbound with a wildcard override for
+`*.aaron.reynoza.org`, forwarding internal lookups to the CoreDNS
+custom zone inside the cluster. This avoids hairpinning — internal
+devices resolve service hostnames directly to cluster IPs without
+routing through the Pangolin VPS.
 
-### Per-VLAN DNS Routing
+### DNS Resolution Flow
 
 ```
   PROD device (10.10.x.x)
@@ -140,41 +146,25 @@ DNS policies, encrypted queries (DoH3), and analytics.
        │ DNS query (UDP :53)
        │
   ┌────┴───────────────────────┐
-  │  OPNSense -- ctrld daemon  │
+  │  OPNSense -- Unbound       │
   │                            │
-  │  1. Inspect source IP      │
-  │  2. Match to network CIDR  │
+  │  Wildcard override:        │
+  │  *.aaron.reynoza.org ->    │
+  │  CoreDNS custom zone       │
+  │  (Cilium Gateway / svc IP) │
   │                            │
-  │  ┌──────────────────────┐  │
-  │  │ 10.10.x.x (PROD)     │  │
-  │  │  -> "PROD" upstream  │  │
-  │  │  (strict filtering)  │  │
-  │  └──────────────────────┘  │
-  │  ┌──────────────────────┐  │
-  │  │ 10.11.x.x (DEV)      │  │
-  │  │  -> "DEV" upstream   │  │
-  │  │  (permissive)        │  │
-  │  └──────────────────────┘  │
-  │                            │
-  │  3. Forward over DoH3      │
-  │  (ISP can't see queries)   │
+  │  All other queries ->      │
+  │  upstream public resolvers │
   └────────────┬───────────────┘
-               │ DNS-over-HTTPS/3
+               │ (internal queries)
                │
   ┌────────────┴───────────────┐
-  │     Control D Cloud        │
+  │  CoreDNS (K8s cluster)     │
   │                            │
-  │  ┌─────────┐ ┌─────────┐   │
-  │  │ "PROD"  │ │ "DEV"   │   │
-  │  │ Profile │ │ Profile │   │
-  │  │         │ │         │   │
-  │  │ Blk ads │ │ Blk mal │   │
-  │  │ Blk trk │ │ Alw ads │   │
-  │  │ Blk mal │ │ Alw trk │   │
-  │  └─────────┘ └─────────┘   │
-  │                            │
-  │  Dashboard: analytics,     │
-  │  top domains, blocked      │
+  │  Custom zone for           │
+  │  *.aaron.reynoza.org       │
+  │  -> Cilium Gateway IP      │
+  │     (10.10.10.228)         │
   └────────────────────────────┘
 ```
 
@@ -184,7 +174,7 @@ Same domain resolves differently based on
 where you ask from.
 
 ```
-  Query: "app.example.com"
+  Query: "app.aaron.reynoza.org"
 
   ┌────────────────────────────┐
   │ EXTERNAL (internet user)   │
@@ -200,26 +190,14 @@ where you ask from.
   ┌────────────────────────────┐
   │ INTERNAL (device on VLAN)  │
   │                            │
-  │ Resolves to: cluster IP    │
-  │ (ClusterIP or Ingress)     │
+  │ Resolves to: Cilium GW IP  │
+  │ (10.10.10.228)             │
   │                            │
   │ Path:                      │
-  │   Device -> K8s svc        │
+  │   Device -> Cilium Gateway │
+  │   -> HTTPRoute -> K8s svc  │
   │   No tunnel, no VPS hop.   │
   └────────────────────────────┘
-
-  Configured in ctrld:
-
-    [listener.0.policy]
-      rules = [
-        # internal domains -> local
-        { '*.example.com' =
-            ['upstream.local'] }
-      ]
-
-    [upstream.local]
-      type = 'legacy'
-      endpoint = '<cluster-dns>:53'
 
   Avoids "hairpinning" -- internal
   traffic stays internal instead of
@@ -269,19 +247,54 @@ Additive layer -- no architecture changes needed.
   ┌────────────────────────────┐
   │  PROD K8s CLUSTER          │
   │                            │
+  │  NETWORKING                │
+  │  Cilium (CNI + LB-IPAM)    │
+  │  Cilium Gateway API        │
+  │    -> 10.10.10.228         │
+  │    HTTPRoutes per service  │
+  │                            │
   │  PLATFORM                  │
-  │  ArgoCD  Cilium  Longhorn  │
-  │  Velero  Harbor  Newt      │
+  │  ArgoCD  Longhorn  Velero  │
+  │  Harbor  Newt  CNPG        │
   │  Forgejo FgActn  Zitadel   │
   │                            │
   │  OBSERVABILITY             │
   │  Grafana  Prometheus Hubble│
-  │  Mimir  Loki  Tempo  OTel │
+  │  Mimir  Loki  Tempo  OTel  │
   │                            │
-  │  APPLICATIONS (planned)    │
-  │  Jellyfin (media)          │
-  │  Other personal services   │
+  │  APPLICATIONS              │
+  │  Plane (project mgmt)      │
+  │  Open WebUI + Ollama       │
+  │    + LiteLLM (LLM stack)   │
+  │  code-server (VM 110)      │
+  │                            │
+  │  PLANNED                   │
+  │  Outline (docs)            │
+  │  Jellyfin + *arr (media)   │
+  │  Immich (photos)           │
   └────────────────────────────┘
+```
+
+### Cilium Gateway API
+
+All services are exposed via a single Cilium Gateway at `10.10.10.228`
+with per-service HTTPRoutes for hostname-based routing. Pangolin/Newt
+forward external HTTPS traffic (from `*.aaron.reynoza.org`) into this
+gateway — the same path used for internal access.
+
+```
+  External user
+    -> Pangolin VPS (Traefik TLS)
+      -> WireGuard tunnel
+        -> Newt (K8s pod)
+          -> Cilium Gateway (10.10.10.228)
+            -> HTTPRoute (hostname match)
+              -> K8s Service
+
+  Internal device (VLAN 10)
+    -> Cilium Gateway (10.10.10.228)
+      -> HTTPRoute (hostname match)
+        -> K8s Service
 ```
 
 ### Development Cluster

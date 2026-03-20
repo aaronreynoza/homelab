@@ -4,6 +4,65 @@ This document tracks significant milestones, work sessions, and progress on the 
 
 ---
 
+## 2026-03-19 — Agent Pipeline & Workspace
+
+- **Agent workspace on VM 110**: code-server v4.111.0 + Claude Code v2.1.79 Remote Control on Management VM 110
+  - Dedicated `claude-agent` user with cgroup limits (4 CPU, 8GB RAM)
+  - Workspace at `~/workspace/` with project-scoped layout
+  - code.aaron.reynoza.org via Caddy + Cilium Gateway + Pangolin
+  - 9 skills deployed (researcher, planner, reviewer, executor, verifier, tracker, technical-writer, orchestrator-common, plane-workflow)
+  - Plane MCP connected for ticket management
+- **SP1 (Agent Config)**: Private `agent-config` Forgejo repo with CLAUDE.md, skills, MCP config, QA checks
+- **SP2 (Skill Framework)**: 7 specialized skills verified end-to-end from Remote Control
+- **SP3 (Orchestration Pipeline)**: Project-scoped orchestrator with dual-mode (work session/normal), backtracking, dangerous ops handling
+- **Harbor pull-through cache**: Proxy cache projects for GHCR, Docker Hub, k8s.io with Talos containerd mirrors
+
+## 2026-03-18 — Plane & Agent Foundation
+
+- **Plane deployed**: Project management at plane.aaron.reynoza.org with 73 tickets, 7 modules, 12 labels
+- **Plane MCP**: MCP server for Claude Code to read/write Plane tickets
+- **Plane workflow guide**: Documented ticket lifecycle and conventions
+
+## 2026-03-17 — Subdomains, LLM Stack, DNS
+
+- **Cilium Gateway API**: Single gateway at 10.10.10.228 with HTTPRoutes per service (replaced per-service LoadBalancer IPs)
+- **Split-horizon DNS**: OPNSense wildcard override + CoreDNS custom zone for internal resolution
+- **Pangolin IaC**: `pangolin-resources.py` script + `resources.yaml` for declarative public resource management
+- **All services on subdomains**: forgejo/harbor/argocd/grafana/zitadel/plane/chat at *.aaron.reynoza.org
+- **LLM stack**: Ollama + LiteLLM + Open WebUI at chat.aaron.reynoza.org
+- **GPU passthrough**: NVIDIA RTX 3060 via VFIO to K8s worker, verified with Ollama
+- **GitHub push mirrors**: Forgejo → GitHub sync_on_commit for infra-core and prod repos
+- **CI/CD pipelines**: 4 workflow files, mgmt VM runner (Terraform) + K8s runner (lint/build)
+
+## 2026-03-16 — Forgejo Migration & Repo Split
+
+- **Two-repo architecture**: infra-core (public OSS) + prod (private env-specific)
+- **Forgejo source of truth**: Migrated from GitHub, history purged of secrets
+- **Repo rename**: homelab → infra-core, homelab-env → prod
+- **DNS fix**: k8sServiceHost broken by history rewrite, fixed
+
+## 2026-03-14 — SSO & Management VM
+
+- **Zitadel SSO**: Terraform-driven OIDC for ArgoCD, Forgejo, Grafana, Harbor
+- **Management VM (ID 110)**: Debian 12, dual-homed, Ansible-configured, Forgejo runner
+
+## 2026-03-12 — Platform Apps & Storage
+
+- **All platform apps deployed**: Forgejo, Harbor, Zitadel, Velero, kube-prometheus-stack, Loki, Tempo, Mimir, OTel Collector
+- **SOPS secrets management**: Age encryption for all K8s secrets
+- **Cilium LB-IPAM**: IP pool 10.10.10.220-250
+- **Storage decision**: Longhorn on SSD for PVCs, NFS from Proxmox for media, TrueNAS deferred
+- **Worker kubelet fix**: Removed NVIDIA extensions from non-GPU workers
+
+## 2026-03-10 — Talos Cluster
+
+- **Talos Linux v1.12.5**: 1 CP + 2 workers on VLAN 10
+- **Cilium CNI**: With Hubble observability
+- **Longhorn storage**: Replica 1 on SSD
+- **ArgoCD**: App-of-apps pattern, sourcing from Forgejo
+
+---
+
 ## 2026-02-04 - Phase 2 Network Infrastructure Complete
 
 ### Summary
