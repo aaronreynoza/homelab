@@ -28,6 +28,11 @@ gitea:
   admin:
     email: admin@localhost
 
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
   config:
     server:
       SSH_DOMAIN: ""
@@ -44,6 +49,9 @@ gitea:
       ENABLED: true
 
     actions:
+      ENABLED: true
+
+    metrics:
       ENABLED: true
 
     # Cache/session/queue - use built-in memory/leveldb (no external redis)

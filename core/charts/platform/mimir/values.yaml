@@ -79,6 +79,6 @@ metaMonitoring:
   dashboards:
     enabled: false
   serviceMonitor:
-    enabled: false
+    enabled: true
   prometheusRule:
     enabled: false

@@ -1,0 +1,28 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: pve-alerts
+  namespace: monitoring
+  labels:
+    prometheus: kube-prometheus-stack
+    role: alert-rules
+spec:
+  groups:
+    - name: pve.rules
+      rules:
+        - alert: PVENodeUnreachable
+          expr: pve_up{id=~"node/daytona"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Proxmox node daytona is unreachable"
+            description: "PVE exporter cannot reach node daytona for 5 minutes."
+        - alert: PVEDiskFull
+          expr: (pve_storage_used_bytes / pve_storage_size_bytes) * 100 > 90
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "PVE storage {{ $labels.id }} is > 90% full"
+            description: "Proxmox storage {{ $labels.id }} is {{ printf \"%.1f\" $value }}% used."

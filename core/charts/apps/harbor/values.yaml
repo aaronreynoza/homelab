@@ -118,3 +118,9 @@ registry:
     limits:
       cpu: 500m
       memory: 512Mi
+
+# Metrics & monitoring
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true

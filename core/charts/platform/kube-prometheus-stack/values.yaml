@@ -33,6 +33,14 @@ prometheus:
 
 # --- Grafana ---
 grafana:
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      folderAnnotation: grafana-folder
+      provider:
+        foldersFromFilesStructure: false
   persistence:
     enabled: true
     storageClassName: longhorn

@@ -64,6 +64,8 @@ resultsCache:
 
 # Monitoring - disable self-monitoring to avoid circular deps
 monitoring:
+  serviceMonitor:
+    enabled: true
   selfMonitoring:
     enabled: false
   lokiCanary:

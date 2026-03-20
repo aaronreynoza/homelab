@@ -2,3 +2,7 @@ defaultSettings:
   defaultReplicaCount: 1
   storageMinimalAvailablePercentage: 1
   defaultDataPath: "/var/mnt/u-longhorn"
+
+metrics:
+  serviceMonitor:
+    enabled: true

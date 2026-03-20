@@ -31,3 +31,7 @@ cainjector:
     limits:
       cpu: 200m
       memory: 256Mi
+
+prometheus:
+  servicemonitor:
+    enabled: true

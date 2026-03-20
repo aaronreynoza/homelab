@@ -36,6 +36,10 @@ resources:
     cpu: 500m
     memory: 1Gi
 
+# Metrics
+serviceMonitor:
+  enabled: true
+
 # Service (ClusterIP - internal only)
 service:
   type: ClusterIP

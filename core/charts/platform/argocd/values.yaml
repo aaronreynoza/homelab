@@ -7,6 +7,10 @@ server:
     - --insecure
   service:
     type: LoadBalancer
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
   resources:
     requests:
       cpu: 100m
@@ -16,6 +20,10 @@ server:
       memory: 512Mi
 
 controller:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
   resources:
     requests:
       cpu: 250m
@@ -25,6 +33,10 @@ controller:
       memory: 1Gi
 
 repoServer:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
   resources:
     requests:
       cpu: 100m
