@@ -4,7 +4,7 @@ metadata:
   name: pod-alerts
   namespace: monitoring
   labels:
-    prometheus: kube-prometheus-stack
+    release: kube-prometheus-stack
     role: alert-rules
 spec:
   groups:
