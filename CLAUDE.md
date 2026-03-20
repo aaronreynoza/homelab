@@ -108,7 +108,7 @@ Environments are **fully isolated** - no inter-VLAN communication.
 8. Immich (Google Photos replacement)
 9. Paperless-ngx (document OCR/management)
 
-See [docs/issues/backlog.md](docs/issues/backlog.md) and `internal-docs/master-plan.md` for full roadmap.
+See [docs/issues/backlog.md](docs/issues/backlog.md) and [docs/roadmap.md](docs/roadmap.md) for full roadmap. Tickets and documentation live in Plane (workspace: homelab, project: HOMELAB).
 
 ---
 
