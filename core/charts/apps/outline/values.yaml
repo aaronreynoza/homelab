@@ -25,7 +25,7 @@ outline:
   # Public URL — set in prod overlay
   url: ""
   fileStorage: s3
-  forceHttps: "true"
+  forceHttps: "false"
   defaultLanguage: en_US
   webConcurrency: "1"
   logLevel: info
