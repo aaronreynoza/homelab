@@ -40,6 +40,7 @@ Environments are **fully isolated** - no inter-VLAN communication.
 - Plane (project management, Plane MCP)
 - CNPG (CloudNativePG operator + clusters)
 - Open WebUI + Ollama + LiteLLM (LLM stack)
+- Outline (documentation wiki)
 - code-server on VM 110 (agent workspace)
 
 ### Git Architecture
@@ -51,7 +52,7 @@ Environments are **fully isolated** - no inter-VLAN communication.
 ### Service URLs (via Pangolin)
 - All services at `*.aaron.reynoza.org` with auto TLS via Pangolin
 - `forgejo.aaron.reynoza.org`, `harbor.aaron.reynoza.org`, `argocd.aaron.reynoza.org`, `grafana.aaron.reynoza.org`, `zitadel.aaron.reynoza.org`
-- `plane.aaron.reynoza.org`, `code.aaron.reynoza.org`, `chat.aaron.reynoza.org`
+- `plane.aaron.reynoza.org`, `code.aaron.reynoza.org`, `chat.aaron.reynoza.org`, `docs.aaron.reynoza.org`
 - Pangolin resources managed via `scripts/pangolin/pangolin-resources.py`
 - Newt (K8s pod) maintains WireGuard tunnel to Pangolin VPS
 
@@ -110,9 +111,7 @@ Environments are **fully isolated** - no inter-VLAN communication.
 - ~~Harbor pull-through cache~~ — GHCR/Docker/K8s proxy caches (2026-03-19)
 
 **Next Tasks** (in order):
-1. Deploy Outline documentation platform
-2. Remove Coder platform (HOMELAB-68)
-3. Deploy Ntfy push notifications
+1. Deploy Ntfy push notifications
 4. Configure ControlD split-horizon
 5. Media platform (*arr stack + Jellyfin + Navidrome)
 6. Immich (Google Photos replacement)
