@@ -8,7 +8,7 @@
 
 ## Goal
 
-Self-hosted LLM platform with GPU acceleration, a chat UI, WhatsApp integration, and Claude API access — all behind a unified API gateway.
+Self-hosted LLM platform with GPU acceleration, a chat UI, and Claude API access — all behind a unified API gateway.
 
 ## Components
 
@@ -17,19 +17,16 @@ Self-hosted LLM platform with GPU acceleration, a chat UI, WhatsApp integration,
 | **Ollama** | Local LLM inference (RTX 3060, 12GB VRAM) | Yes | No (internal) |
 | **LiteLLM** | API proxy — routes to Ollama or Claude, cost tracking | No | No (internal) |
 | **Open WebUI** | Chat interface (ChatGPT-like UI) | No | Yes → `chat.aaron.reynoza.org` |
-| **OpenClaw** | AI agent — WhatsApp bridge, task execution | No | No (outbound only) |
 
 ## Architecture
 
 ```
-┌─────────────┐     ┌─────────────┐
-│  Open WebUI │     │  OpenClaw   │
-│  (chat UI)  │     │  (WhatsApp) │
-└──────┬──────┘     └──────┬──────┘
-       │                   │
-       └───────┬───────────┘
-               │
-        ┌──────┴──────┐
+┌─────────────┐
+│  Open WebUI │
+│  (chat UI)  │
+└──────┬──────┘
+       │
+┌──────┴──────┐
         │   LiteLLM   │
         │  (API proxy) │
         └──┬───────┬──┘
@@ -131,7 +128,6 @@ Note: Only one local model is loaded in VRAM at a time. Ollama automatically unl
 | Ollama | 2/4 cores | 8Gi/16Gi | 50Gi PVC (models, Longhorn) | GPU node (nodeSelector + `nvidia.com/gpu: 1`) |
 | LiteLLM | 100m/500m | 128Mi/256Mi | None (stateless) | Any |
 | Open WebUI | 100m/500m | 256Mi/512Mi | 5Gi PVC (chat history) | Any |
-| OpenClaw | 100m/500m | 256Mi/512Mi | 5Gi PVC (memory/config) | Any |
 
 Ollama container MUST request `nvidia.com/gpu: 1` — without this, the NVIDIA device plugin won't mount the GPU device and inference falls back to CPU silently.
 
@@ -144,7 +140,6 @@ Follows the established multi-source pattern (base values in infra-core, overrid
 core/charts/apps/ollama/values.yaml          # Base: persistence, resources, service
 core/charts/apps/open-webui/values.yaml      # Base: persistence, resources, service
 core/charts/apps/litellm/values.yaml         # Base: resources, config structure
-core/charts/apps/openclaw/values.yaml        # Base: resources, persistence
 core/charts/platform/nvidia-device-plugin/values.yaml  # Base: time-slicing config
 ```
 
@@ -153,12 +148,10 @@ core/charts/platform/nvidia-device-plugin/values.yaml  # Base: time-slicing conf
 prod/apps/ollama.yaml                        # ArgoCD Application (multi-source)
 prod/apps/open-webui.yaml                    # ArgoCD Application (multi-source)
 prod/apps/litellm.yaml                       # ArgoCD Application (multi-source)
-prod/apps/openclaw.yaml                      # ArgoCD Application (multi-source)
 prod/apps/nvidia-device-plugin.yaml          # ArgoCD Application (multi-source)
 prod/values/ollama/values.yaml               # GPU request, nodeSelector
 prod/values/open-webui/values.yaml           # LiteLLM URL, Zitadel OIDC
 prod/values/litellm/values.yaml              # Anthropic key ref, model config
-prod/values/openclaw/values.yaml             # WhatsApp creds, LiteLLM URL
 prod/values/nvidia-device-plugin/values.yaml # nodeSelector for GPU node
 ```
 
@@ -167,26 +160,7 @@ prod/values/nvidia-device-plugin/values.yaml # nodeSelector for GPU node
 | Secret | Namespace | Keys |
 |--------|-----------|------|
 | `anthropic-api-key` | ai | `api-key` |
-| `openclaw-credentials` | ai | WhatsApp bridge token, config |
 | `litellm-master-key` | ai | `master-key` (LiteLLM admin) |
-
-## OpenClaw + WhatsApp
-
-[OpenClaw](https://github.com/openclaw/openclaw) is a Node.js AI agent runtime that bridges messaging platforms to LLM providers.
-
-**WhatsApp integration options:**
-- **Meta Cloud API** (official) — requires Facebook business verification, more reliable
-- **whatsmeow bridge** (unofficial) — simpler setup, but fragile (breaks with WhatsApp updates)
-
-Recommend starting with Meta Cloud API if Aaron has a business account, otherwise whatsmeow for quick start with the understanding it may need maintenance.
-
-OpenClaw connects to LiteLLM as its LLM backend:
-```bash
-openclaw onboard --non-interactive \
-  --auth-choice litellm-api-key \
-  --litellm-api-key "<master-key>" \
-  --custom-base-url "http://litellm.ai.svc.cluster.local:4000"
-```
 
 ## Networking
 
@@ -195,7 +169,6 @@ openclaw onboard --non-interactive \
 | Ollama | ClusterIP | No | No |
 | LiteLLM | ClusterIP | No | No |
 | Open WebUI | LoadBalancer | `chat.aaron.reynoza.org` | Yes |
-| OpenClaw | ClusterIP | No | No |
 
 ## Implementation Order
 
@@ -209,10 +182,7 @@ openclaw onboard --non-interactive \
 | 6 | Deploy Open WebUI, connect to LiteLLM | Step 5 |
 | 7 | Create Pangolin resource for chat.aaron.reynoza.org | Step 6 |
 | 8 | Configure Zitadel OIDC for Open WebUI | Step 7 |
-| 9 | Deploy OpenClaw, connect to LiteLLM + WhatsApp | Step 5 |
-| 10 | Test end-to-end: chat UI + WhatsApp + local + Claude | Step 9 |
-
-Steps 6-8 and step 9 can run in parallel (both depend on step 5).
+| 9 | Test end-to-end: chat UI + local models + Claude | Step 8 |
 
 ## Terraform Considerations
 
@@ -230,5 +200,3 @@ Can be done as part of step 1 or deferred as tech debt.
 - [ ] Ollama responds to API calls with GPU-accelerated inference
 - [ ] LiteLLM routes `fast` to Ollama, `smart` to Claude
 - [ ] Open WebUI accessible at `https://chat.aaron.reynoza.org` with Zitadel SSO
-- [ ] OpenClaw responds to WhatsApp messages using local models
-- [ ] OpenClaw uses Claude when explicitly asked for complex tasks
