@@ -89,9 +89,9 @@ Tasks identified during cluster setup that are not needed for the initial deploy
 ### MkDocs documentation site → CANCELLED
 - **Replaced by:** Outline wiki (HOMELAB-72). MkDocs tickets cancelled (HOMELAB-17, 46, 47).
 
-### Coder workspace platform → REPLACED
+### Coder workspace platform → REMOVED
 - **Replaced by:** code-server + Claude Code Remote Control on Management VM 110 (2026-03-19)
-- **Cleanup:** HOMELAB-68 (remove Coder) is in Todo state
+- **Removed:** All Coder infra deleted (HOMELAB-104, 2026-03-20)
 
 ---
 
