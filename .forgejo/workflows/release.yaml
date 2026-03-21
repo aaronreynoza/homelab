@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+jobs:
+  release:
+    runs-on: k8s
+    if: github.event.pull_request.merged == true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine next version
+        id: version
+        run: |
+          LATEST=$(git tag --sort=-v:refname | head -1)
+          if [ -z "$LATEST" ]; then
+            NEXT="v1.0.0"
+          else
+            MAJOR=$(echo "$LATEST" | cut -d. -f1)
+            MINOR=$(echo "$LATEST" | cut -d. -f2)
+            NEXT="${MAJOR}.$((MINOR + 1)).0"
+          fi
+          echo "version=$NEXT" >> $GITHUB_OUTPUT
+          echo "previous=${LATEST:-none}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV="${{ steps.version.outputs.previous }}"
+          if [ "$PREV" = "none" ]; then
+            RANGE="HEAD"
+          else
+            RANGE="${PREV}..HEAD"
+          fi
+          echo "## Changes" > /tmp/changelog.md
+          echo "" >> /tmp/changelog.md
+          git log "$RANGE" --pretty=format:"- %s" --no-merges >> /tmp/changelog.md
+
+      - name: Create tag
+        run: |
+          git tag "${{ steps.version.outputs.version }}"
+          git push origin "${{ steps.version.outputs.version }}"
+
+      - name: Create Forgejo release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BODY=$(cat /tmp/changelog.md)
+          curl -sf -X POST \
+            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases" \
+            -H "Authorization: token ${GITHUB_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg tag "${{ steps.version.outputs.version }}" \
+              --arg name "${{ steps.version.outputs.version }}" \
+              --arg body "$BODY" \
+              '{"tag_name": $tag, "name": $name, "body": $body}')"
