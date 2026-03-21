@@ -583,7 +583,7 @@ resource "null_resource" "harbor_oidc_config" {
           "oidc_auto_onboard": true,
           "oidc_user_claim": "email",
           "oidc_groups_claim": "groups",
-          "oidc_admin_group": "admin"
+          "oidc_admin_group": "admins"
         }'
 
       echo "Harbor OIDC configuration applied."
