@@ -1,0 +1,249 @@
+direction: down
+
+vars: {
+  d2-config: {
+    theme-id: 200
+    layout-engine: elk
+    pad: 40
+  }
+}
+
+classes: {
+  hardware: { style: { fill: "#1e3a5f"; stroke: "#3b82f6"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  network: { style: { fill: "#1e4f5f"; stroke: "#06b6d4"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  k8s: { style: { fill: "#0a3b1c"; stroke: "#22c55e"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  platform: { style: { fill: "#5f3a1e"; stroke: "#f97316"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  observability: { style: { fill: "#1e5f2e"; stroke: "#22c55e"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  ai: { style: { fill: "#3d1e5f"; stroke: "#a855f7"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  security: { style: { fill: "#5f1e1e"; stroke: "#ef4444"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  external: { style: { fill: "#2d2d2d"; stroke: "#9ca3af"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  layer: { style: { fill: "#1a1a2e"; stroke: "#374151"; stroke-dash: 5; font-color: "#9ca3af"; border-radius: 12 } }
+}
+
+title: |md
+  # Homelab Full Stack Overview
+  6 Layers — Hardware to AI Development
+| {
+  near: top-center
+  style: { font-color: "#ffffff"; fill: "#1a1a2e"; stroke: "#1a1a2e" }
+}
+
+# Layer 1: Hardware
+L1: "Layer 1 — Hardware" {
+  class: layer
+
+  proxmox: "Proxmox VE\ndaytona" {
+    class: hardware
+  }
+  cpu: "56 Cores\n125 GB RAM" {
+    class: hardware
+  }
+  gpu: "RTX 3060\nVFIO" {
+    class: hardware
+  }
+  storage: "SSD + ZFS\n+ Backblaze B2" {
+    class: hardware
+  }
+}
+
+# Layer 2: Network
+L2: "Layer 2 — Network" {
+  class: layer
+
+  opnsense: "OPNSense\nFirewall / Router" {
+    class: security
+  }
+  vlan10: "VLAN 10\nProduction" {
+    class: network
+  }
+  vlan11: "VLAN 11\nDevelopment" {
+    class: network
+  }
+  pangolin: "Pangolin\nReverse Tunnel" {
+    class: network
+  }
+  dns: "Control D\nSplit-Horizon DNS" {
+    class: network
+  }
+}
+
+# Layer 3: Kubernetes
+L3: "Layer 3 — Kubernetes" {
+  class: layer
+
+  talos: "Talos Linux\nImmutable OS" {
+    class: k8s
+  }
+  cilium: "Cilium\nCNI + LB-IPAM" {
+    class: k8s
+  }
+  longhorn: "Longhorn\nDistributed Storage" {
+    class: k8s
+  }
+  certmgr: "cert-manager\nTLS" {
+    class: security
+  }
+}
+
+# Layer 4: Platform
+L4: "Layer 4 — Platform Services" {
+  class: layer
+
+  forgejo: "Forgejo\nGit + CI" {
+    class: platform
+  }
+  argocd: "ArgoCD\nGitOps" {
+    class: platform
+  }
+  harbor: "Harbor\nRegistry" {
+    class: platform
+  }
+  zitadel: "Zitadel\nSSO / OIDC" {
+    class: security
+  }
+  cnpg: "CloudNativePG\nPostgreSQL" {
+    class: platform
+  }
+  velero: "Velero\nBackup / DR" {
+    class: platform
+  }
+}
+
+# Layer 5: Observability
+L5: "Layer 5 — Observability" {
+  class: layer
+
+  prometheus: "Prometheus\nMetrics" {
+    class: observability
+  }
+  grafana: "Grafana\nDashboards" {
+    class: observability
+  }
+  loki: "Loki\nLogs" {
+    class: observability
+  }
+  tempo: "Tempo\nTraces" {
+    class: observability
+  }
+  mimir: "Mimir\nLong-term Metrics" {
+    class: observability
+  }
+  otel: "OTel Collector\nPipeline" {
+    class: observability
+  }
+}
+
+# Layer 6: AI Development
+L6: "Layer 6 — AI Development" {
+  class: layer
+
+  claude: "Claude Code\nAI Agent" {
+    class: ai
+  }
+  plane: "Plane\nProject Mgmt" {
+    class: ai
+  }
+  outline: "Outline\nDocumentation" {
+    class: ai
+  }
+  pipeline: "Agent Pipeline\nTracker → Reflector" {
+    class: ai
+  }
+  ollama: "Ollama + LiteLLM\nLocal LLM Inference" {
+    class: ai
+  }
+  openwebui: "Open WebUI\nChat Interface" {
+    class: ai
+  }
+}
+
+# --- Key Data Flows ---
+
+# Hardware → Network
+L1.proxmox -> L2.opnsense: "Hosts VM" {
+  style: { stroke: "#3b82f6"; stroke-dash: 3 }
+}
+L1.proxmox -> L3.talos: "Hosts K8s VMs" {
+  style: { stroke: "#3b82f6"; stroke-dash: 3 }
+}
+
+# Network → Kubernetes
+L2.opnsense -> L2.vlan10: "Routes" {
+  style: { stroke: "#06b6d4" }
+}
+L2.opnsense -> L2.vlan11: "Routes" {
+  style: { stroke: "#06b6d4" }
+}
+L2.vlan10 -> L3.cilium: "Pod traffic" {
+  style: { stroke: "#22c55e" }
+}
+L2.pangolin -> L3.cilium: "External ingress" {
+  style: { stroke: "#06b6d4"; stroke-dash: 3 }
+}
+
+# Kubernetes → Platform
+L3.cilium -> L4.forgejo: "Ingress" {
+  style: { stroke: "#22c55e"; stroke-dash: 5 }
+}
+L3.longhorn -> L4.cnpg: "PVC storage" {
+  style: { stroke: "#f59e0b"; stroke-dash: 5 }
+}
+
+# Platform internal flows
+L4.forgejo -> L4.argocd: "Webhooks" {
+  style: { stroke: "#f97316" }
+}
+L4.zitadel -> L4.forgejo: "OIDC SSO" {
+  style: { stroke: "#ef4444"; stroke-dash: 5 }
+}
+L4.zitadel -> L4.argocd: "OIDC SSO" {
+  style: { stroke: "#ef4444"; stroke-dash: 5 }
+}
+L4.zitadel -> L5.grafana: "OIDC SSO" {
+  style: { stroke: "#ef4444"; stroke-dash: 5 }
+}
+
+# Platform → Observability
+L5.prometheus -> L5.grafana: "PromQL" {
+  style: { stroke: "#22c55e" }
+}
+L5.loki -> L5.grafana: "LogQL" {
+  style: { stroke: "#22c55e" }
+}
+L5.tempo -> L5.grafana: "TraceQL" {
+  style: { stroke: "#22c55e" }
+}
+L5.prometheus -> L5.mimir: "Remote write" {
+  style: { stroke: "#f59e0b"; stroke-dash: 5 }
+}
+L5.otel -> L5.loki: "Logs" {
+  style: { stroke: "#22c55e"; stroke-dash: 3 }
+}
+L5.otel -> L5.tempo: "Traces" {
+  style: { stroke: "#06b6d4"; stroke-dash: 3 }
+}
+
+# AI Development flows
+L6.claude -> L6.plane: "MCP: tickets" {
+  style: { stroke: "#a855f7" }
+}
+L6.claude -> L6.outline: "MCP: docs" {
+  style: { stroke: "#a855f7" }
+}
+L6.claude -> L6.pipeline: "Executes" {
+  style: { stroke: "#a855f7"; stroke-dash: 3 }
+}
+L6.pipeline -> L4.forgejo: "Git push / PR" {
+  style: { stroke: "#f97316"; stroke-dash: 5 }
+}
+L1.gpu -> L6.ollama: "VFIO GPU\n3800 tok/s" {
+  style: { stroke: "#a855f7"; stroke-dash: 3 }
+}
+L6.ollama -> L6.openwebui: "LLM API" {
+  style: { stroke: "#a855f7"; stroke-dash: 5 }
+}
+
+# Backup flow
+L4.velero -> L1.storage: "Backup to B2" {
+  style: { stroke: "#9ca3af"; stroke-dash: 5 }
+}

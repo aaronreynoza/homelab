@@ -1,0 +1,169 @@
+direction: down
+
+vars: {
+  d2-config: {
+    theme-id: 200
+    layout-engine: elk
+    pad: 40
+  }
+}
+
+classes: {
+  host: { style: { fill: "#1e3a5f"; stroke: "#3b82f6"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  vm: { style: { fill: "#1e4f5f"; stroke: "#06b6d4"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  k8s: { style: { fill: "#0a3b1c"; stroke: "#22c55e"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  security: { style: { fill: "#5f1e1e"; stroke: "#ef4444"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  storage: { style: { fill: "#5f4f1e"; stroke: "#f59e0b"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  gpu: { style: { fill: "#3d1e5f"; stroke: "#a855f7"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  network: { style: { fill: "#0d1f2d"; stroke: "#3b82f6"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  standby: { style: { fill: "#2d2d2d"; stroke: "#4b5563"; font-color: "#6b7280"; border-radius: 8; shadow: true } }
+  offsite: { style: { fill: "#2d2d2d"; stroke: "#9ca3af"; font-color: "#e2e8f0"; border-radius: 8; shadow: true } }
+  layer: { style: { fill: "#1a1a2e"; stroke: "#374151"; stroke-dash: 5; font-color: "#9ca3af"; border-radius: 12 } }
+}
+
+title: |md
+  # Hardware & Proxmox Topology
+  Physical Infrastructure — Single Active Node
+| {
+  near: top-center
+  style: { font-color: "#ffffff"; fill: "#1a1a2e"; stroke: "#1a1a2e" }
+}
+
+# Active Host
+daytona: "daytona — Active Proxmox Host" {
+  style: {
+    fill: "#111827"
+    stroke: "#3b82f6"
+    border-radius: 16
+    font-color: "#e2e8f0"
+  }
+
+  # Hardware specs
+  hw: "Hardware" {
+    class: layer
+
+    cpu: "2x Intel Xeon E5-2680 v4\n56 Cores (28C/56T)" {
+      class: host
+    }
+    ram: "125 GB DDR4 ECC RAM" {
+      class: host
+    }
+    gpu: "NVIDIA RTX 3060 12 GB\nVFIO Passthrough" {
+      class: gpu
+    }
+  }
+
+  # Storage
+  storage: "Storage" {
+    class: layer
+
+    ssd: "240 GB SSD (local-lvm)\nOS + Longhorn PVCs" {
+      class: storage
+    }
+    zfs: "3.6 TB HDD ZFS Mirror\nNFS Media Storage" {
+      class: storage
+    }
+  }
+
+  # Virtual Machines
+  vms: "Virtual Machines" {
+    class: layer
+
+    opnsense: "OPNSense (VM 100)\nRouter / Firewall" {
+      class: security
+    }
+    mgmt: "Management VM (VM 110)\nDebian 12 — 2 vCPU, 4 GB RAM\nAgent Workspace" {
+      class: vm
+    }
+    cp1: "prod-cp-01 (K8s Control Plane)\n4 Cores, 8 GB RAM\n10.10.10.10" {
+      class: k8s
+    }
+    wk1: "prod-wk-01 (K8s Worker)\n8 Cores, 32 GB RAM\n10.10.10.20" {
+      class: k8s
+    }
+    wk2: "prod-wk-02 (K8s Worker)\n8 Cores, 32 GB RAM\n10.10.10.21" {
+      class: k8s
+    }
+  }
+
+  # Network Bridges
+  bridges: "Network Bridges" {
+    class: layer
+
+    vmbr0: "vmbr0\nManagement\n192.168.1.x" {
+      class: network
+    }
+    vmbr1: "vmbr1\nVLAN 10 — Production\n10.10.10.0/16" {
+      class: network
+    }
+    vmbr2: "vmbr2\nVLAN 11 — Development\n10.11.10.0/16" {
+      class: network
+    }
+  }
+}
+
+# Standby Host
+pve: "pve — Standby Node (Powered Off)\nHardware migrated to daytona\nKept for future cluster expansion" {
+  class: standby
+}
+
+# Offsite Backup
+b2: "Backblaze B2\nOffsite Backup" {
+  class: offsite
+}
+
+# --- Connections ---
+
+# VM to bridge mappings
+daytona.vms.opnsense -> daytona.bridges.vmbr0: "WAN" {
+  style: { stroke: "#ef4444" }
+}
+daytona.vms.opnsense -> daytona.bridges.vmbr1: "VLAN 10 trunk" {
+  style: { stroke: "#3b82f6" }
+}
+daytona.vms.opnsense -> daytona.bridges.vmbr2: "VLAN 11 trunk" {
+  style: { stroke: "#a855f7" }
+}
+
+daytona.vms.mgmt -> daytona.bridges.vmbr0: "mgmt" {
+  style: { stroke: "#06b6d4"; stroke-dash: 5 }
+}
+daytona.vms.mgmt -> daytona.bridges.vmbr1: "VLAN 10" {
+  style: { stroke: "#3b82f6"; stroke-dash: 5 }
+}
+
+daytona.vms.cp1 -> daytona.bridges.vmbr1: "VLAN 10" {
+  style: { stroke: "#22c55e" }
+}
+daytona.vms.wk1 -> daytona.bridges.vmbr1: "VLAN 10" {
+  style: { stroke: "#22c55e" }
+}
+daytona.vms.wk2 -> daytona.bridges.vmbr1: "VLAN 10" {
+  style: { stroke: "#22c55e" }
+}
+
+# Storage connections
+daytona.storage.ssd -> daytona.vms.cp1: "local-lvm" {
+  style: { stroke: "#f59e0b"; stroke-dash: 5 }
+}
+daytona.storage.ssd -> daytona.vms.wk1: "local-lvm" {
+  style: { stroke: "#f59e0b"; stroke-dash: 5 }
+}
+daytona.storage.ssd -> daytona.vms.wk2: "local-lvm" {
+  style: { stroke: "#f59e0b"; stroke-dash: 5 }
+}
+
+# GPU passthrough
+daytona.hw.gpu -> daytona.vms.wk1: "VFIO passthrough" {
+  style: { stroke: "#a855f7"; stroke-dash: 3 }
+}
+
+# Offsite backup
+daytona.storage.zfs -> b2: "Velero backups\n(irreplaceable media)" {
+  style: { stroke: "#9ca3af"; stroke-dash: 5 }
+}
+
+# Cluster connection to standby
+daytona -> pve: "Proxmox cluster link\n(node offline)" {
+  style: { stroke: "#4b5563"; stroke-dash: 5 }
+}
