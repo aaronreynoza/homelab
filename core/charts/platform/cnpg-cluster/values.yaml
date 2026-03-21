@@ -33,6 +33,14 @@ cluster:
     enabled: true
     podMonitor:
       enabled: true
+    prometheusRule:
+      enabled: true
+      # Exclude rules with invalid PromQL in chart v0.6.0
+      excludeRules:
+        - CNPGClusterLogicalReplicationErrorsCritical
+        - CNPGClusterLogicalReplicationErrors
+        - CNPGClusterLogicalReplicationStoppedCritical
+        - CNPGClusterLogicalReplicationStopped
 backups:
   enabled: true
   provider: s3
