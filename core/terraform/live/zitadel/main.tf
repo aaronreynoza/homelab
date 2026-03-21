@@ -443,9 +443,9 @@ resource "zitadel_user_grant" "admin_project" {
   org_id     = var.zitadel_org_id
   project_id = zitadel_project.homelab.id
   user_id    = zitadel_human_user.admin.id
-  role_keys  = ["admin"]
+  role_keys  = ["admins"]
 
-  depends_on = [zitadel_project_role.admin]
+  depends_on = [zitadel_project_role.admins]
 }
 
 resource "zitadel_org_member" "admin_iam" {
