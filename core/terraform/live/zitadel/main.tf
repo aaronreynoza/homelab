@@ -456,6 +456,7 @@ resource "zitadel_human_user" "additional" {
 resource "zitadel_user_grant" "additional_project" {
   for_each = { for u in var.additional_users : u.email => u }
 
+  org_id     = var.zitadel_org_id
   project_id = zitadel_project.homelab.id
   user_id    = zitadel_human_user.additional[each.key].id
   role_keys  = [each.value.role]
