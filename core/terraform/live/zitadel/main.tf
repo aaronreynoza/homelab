@@ -462,6 +462,23 @@ resource "zitadel_user_grant" "additional_project" {
   role_keys  = [each.value.role]
 }
 
+# --- Claude Agent (machine user — no MFA, API-only access) ---
+resource "zitadel_machine_user" "claude_agent" {
+  org_id      = var.zitadel_org_id
+  user_name   = "claude-agent"
+  name        = "Claude Agent"
+  description = "AI development agent for the Reynoza Brothers homelab"
+}
+
+resource "zitadel_user_grant" "claude_agent_project" {
+  org_id     = var.zitadel_org_id
+  project_id = zitadel_project.homelab.id
+  user_id    = zitadel_machine_user.claude_agent.id
+  role_keys  = ["admins"]
+
+  depends_on = [zitadel_project_role.admins]
+}
+
 # =============================================================================
 # App-Side OIDC Configuration (Terraform owns these, not ArgoCD)
 # =============================================================================
