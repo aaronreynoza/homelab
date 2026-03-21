@@ -79,10 +79,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BODY="## AI Review (advisory)\n\n"
-          [ -f /tmp/review-ci.md ] && BODY+="$(cat /tmp/review-ci.md)\n\n---\n\n"
-          [ -f /tmp/review-infra.md ] && BODY+="$(cat /tmp/review-infra.md)\n\n"
-          BODY+="_Powered by qwen2.5-coder:7b via Ollama. Advisory only — does not block merge._"
+          BODY=$'## AI Review (advisory)\n\n'
+          [ -f /tmp/review-ci.md ] && BODY+="$(cat /tmp/review-ci.md)"$'\n\n---\n\n'
+          [ -f /tmp/review-infra.md ] && BODY+="$(cat /tmp/review-infra.md)"$'\n\n'
+          BODY+=$'_Powered by qwen2.5-coder:7b via Ollama. Advisory only — does not block merge._'
 
           PR_NUM=${{ github.event.pull_request.number }}
           FORGEJO_URL="${{ github.server_url }}"
