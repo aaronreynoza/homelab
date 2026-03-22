@@ -16,7 +16,7 @@ assessment.
 |------|------|---------|
 | `baseline-deny-all.yaml` | CiliumClusterwideNetworkPolicy | Default deny ingress for workload namespaces |
 | `allow-dns.yaml` | CiliumClusterwideNetworkPolicy | Allow DNS resolution from all pods |
-| `allow-monitoring.yaml` | CiliumNetworkPolicy | Allow Prometheus scraping from monitoring namespace |
+| `allow-monitoring.yaml` | CiliumClusterwideNetworkPolicy | Allow Prometheus scraping from monitoring namespace |
 | `protect-system-namespaces.yaml` | CiliumClusterwideNetworkPolicy | Restrict ingress to protected system namespaces |
 
 ## Deployment Order
