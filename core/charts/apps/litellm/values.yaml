@@ -54,5 +54,7 @@ proxy_config:
         model: anthropic/claude-sonnet-4-20250514
         # api_key resolved from ANTHROPIC_API_KEY env var
         api_key: os.environ/ANTHROPIC_API_KEY
+  litellm_settings:
+    callbacks: ["langfuse"]
   general_settings:
     master_key: os.environ/LITELLM_MASTER_KEY
